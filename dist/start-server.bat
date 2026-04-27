@@ -15,4 +15,4 @@ echo Log file: %LOGFILE%
 echo Listening on: UDP :1812
 echo.
 
-fakeradius-server.exe --secret %SECRET% --log %LOGFILE%
+"%~dp0fakeradius-server.exe" --secret %SECRET% --log %LOGFILE%

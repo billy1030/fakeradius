@@ -17,4 +17,4 @@ echo Username: %USERNAME% (should be REJECTED)
 echo Server: %SERVER%
 echo.
 
-radius-cli.exe --username %USERNAME% --password testpass123 --secret %SECRET% --server %SERVER%
+"%~dp0radius-cli.exe" --username %USERNAME% --password testpass123 --secret %SECRET% --server %SERVER%
