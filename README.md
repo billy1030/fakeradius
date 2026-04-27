@@ -21,15 +21,27 @@ FakeRADIUS accepts all authentication requests except usernames prefixed with `n
 
 ### Start the Server
 
+Listen on all interfaces (default port 1812):
 ```cmd
 fakeradius-server.exe --secret testing123 --log server.log
 ```
 
+Listen on specific IP address:
+```cmd
+fakeradius-server.exe --secret testing123 --addr 192.168.1.100:1812 --log server.log
+```
+
 ### Test with CLI
 
+Test local server:
 ```cmd
 radius-cli.exe --username alice --password test --secret testing123
 radius-cli.exe --username no_admin --password test --secret testing123
+```
+
+Test remote server:
+```cmd
+radius-cli.exe --username alice --password test --secret testing123 --server 192.168.1.100:1812
 ```
 
 ## Behavior
@@ -46,6 +58,15 @@ radius-cli.exe --username no_admin --password test --secret testing123
 | `--secret` | Shared secret (required) | - |
 | `--addr` | Listen address | `:1812` |
 | `--log` | Log file path | console only |
+
+## CLI Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--username` | Username for authentication (required) | - |
+| `--password` | Password for authentication (required) | - |
+| `--secret` | Shared secret with the server (required) | - |
+| `--server` | RADIUS server address | `127.0.0.1:1812` |
 
 ## Features
 
