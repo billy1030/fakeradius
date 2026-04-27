@@ -1,0 +1,63 @@
+[2026-04-27 17:45:14.519] Fake RADIUS Server starting on :1812
+[2026-04-27 17:45:14.521] Shared secret: testing123
+[2026-04-27 17:45:14.521] Logging to file: ./dist/server.log
+[2026-04-27 17:45:14.527] Listening on [::]:1812
+[2026-04-27 17:45:20.683] === Received packet from 127.0.0.1:56504 (70 bytes) ===
+[2026-04-27 17:45:20.684] Request: Code=1, Identifier=0, Length=70
+[2026-04-27 17:45:20.684] Message-Authenticator: valid
+[2026-04-27 17:45:20.686] Username: no_admin
+[2026-04-27 17:45:20.687] === Sent Access-Reject to 127.0.0.1:56504 ===
+[2026-04-27 17:45:20.687] Reply-Message: User not allowed
+[2026-04-27 17:45:20.687] 
+[2026-04-27 17:45:36.118] Fake RADIUS Server starting on :1812
+[2026-04-27 17:45:36.123] Shared secret: testing123
+[2026-04-27 17:45:36.123] Logging to file: ./dist/server.log
+[2026-04-27 17:45:38.326] === Received packet from 127.0.0.1:56505 (67 bytes) ===
+[2026-04-27 17:45:38.327] Request: Code=1, Identifier=0, Length=67
+[2026-04-27 17:45:38.327] Message-Authenticator: valid
+[2026-04-27 17:45:38.327] Username: alice
+[2026-04-27 17:45:38.327] === Sent Access-Accept to 127.0.0.1:56505 ===
+[2026-04-27 17:45:38.327] Reply-Message: Authentication accepted
+[2026-04-27 17:45:38.327] 
+[2026-04-27 17:45:39.545] === Received packet from 127.0.0.1:56506 (70 bytes) ===
+[2026-04-27 17:45:39.546] Request: Code=1, Identifier=0, Length=70
+[2026-04-27 17:45:39.546] Message-Authenticator: valid
+[2026-04-27 17:45:39.546] Username: no_admin
+[2026-04-27 17:45:39.546] === Sent Access-Reject to 127.0.0.1:56506 ===
+[2026-04-27 17:45:39.546] Reply-Message: User not allowed
+[2026-04-27 17:45:39.546] 
+[2026-04-27 17:47:34.175] Fake RADIUS Server starting on :1812
+[2026-04-27 17:47:34.180] Shared secret: testing123
+[2026-04-27 17:47:34.180] Logging to file: server.log
+[2026-04-27 17:47:59.689] Fake RADIUS Server starting on :1812
+[2026-04-27 17:47:59.695] Shared secret: testing123
+[2026-04-27 17:47:59.695] Logging to file: server.log
+[2026-04-27 17:47:59.700] Listening on [::]:1812
+[2026-04-27 17:48:04.812] === Received packet from 127.0.0.1:58947 (74 bytes) ===
+[2026-04-27 17:48:04.812] Request: Code=1, Identifier=0, Length=74
+[2026-04-27 17:48:04.812] Message-Authenticator: valid
+[2026-04-27 17:48:04.812] Username: alice
+[2026-04-27 17:48:04.812] === Sent Access-Accept to 127.0.0.1:58947 ===
+[2026-04-27 17:48:04.812] Reply-Message: Authentication accepted
+[2026-04-27 17:48:04.812] 
+[2026-04-27 17:49:38.140] === Received packet from 127.0.0.1:58019 (70 bytes) ===
+[2026-04-27 17:49:38.140] Request: Code=1, Identifier=0, Length=70
+[2026-04-27 17:49:38.140] Message-Authenticator: valid
+[2026-04-27 17:49:38.140] Username: no_admin
+[2026-04-27 17:49:38.140] === Sent Access-Reject to 127.0.0.1:58019 ===
+[2026-04-27 17:49:38.140] Reply-Message: User not allowed
+[2026-04-27 17:49:38.140] 
+[2026-04-27 17:50:50.057] === Received packet from 127.0.0.1:57929 (74 bytes) ===
+[2026-04-27 17:50:50.057] Request: Code=1, Identifier=0, Length=74
+[2026-04-27 17:50:50.058] Message-Authenticator: valid
+[2026-04-27 17:50:50.058] Username: alice
+[2026-04-27 17:50:50.058] === Sent Access-Accept to 127.0.0.1:57929 ===
+[2026-04-27 17:50:50.058] Reply-Message: Authentication accepted
+[2026-04-27 17:50:50.058] 
+[2026-04-27 17:50:56.670] === Received packet from 127.0.0.1:57930 (77 bytes) ===
+[2026-04-27 17:50:56.670] Request: Code=1, Identifier=0, Length=77
+[2026-04-27 17:50:56.670] Message-Authenticator: valid
+[2026-04-27 17:50:56.671] Username: no_admin
+[2026-04-27 17:50:56.671] === Sent Access-Reject to 127.0.0.1:57930 ===
+[2026-04-27 17:50:56.671] Reply-Message: User not allowed
+[2026-04-27 17:50:56.671] 
