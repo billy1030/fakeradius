@@ -24,7 +24,10 @@
 6. Query tool sends Access-Request packets from command line
 7. Query tool displays full response packet details (code, attributes, raw bytes)
 
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 01-01-PLAN.md — RADIUS server (UDP 1812, no_ prefix logic, Message-Authenticator, Reply-Message) + Query tool CLI
 
 **UI hint**: no
 
