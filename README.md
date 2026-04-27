@@ -33,23 +33,31 @@ fakeradius-server.exe --secret testing123 --addr 192.168.1.100:1812 --log server
 
 ### Test with CLI
 
-Test local server (default: 127.0.0.1:1812):
+Test local server:
 ```cmd
 radius-cli.exe --username alice --password test --secret testing123
-radius-cli.exe --username no_admin --password test --secret testing123
+radius-cli.exe --username bob --password secretpass --secret testing123
+radius-cli.exe --username admin --password admin123 --secret testing123
 ```
 
-Test remote server with IP and port:
+Test rejected user (no_ prefix):
+```cmd
+radius-cli.exe --username no_admin --password test --secret testing123
+radius-cli.exe --username no_peter --password test --secret testing123
+```
+
+Test remote server:
 ```cmd
 radius-cli.exe --username alice --password test --secret testing123 --server 192.168.1.100:1812
+radius-cli.exe --username alice --password test --secret testing123 --server 10.0.0.50:1812
 ```
 
 ## Behavior
 
 | Username | Response |
 |----------|----------|
-| `alice`, `bob`, any name | Access-Accept |
-| `no_*` prefix (e.g., `no_admin`) | Access-Reject |
+| `alice`, `bob`, `admin`, any name | Access-Accept |
+| `no_*` prefix (e.g., `no_admin`, `no_peter`) | Access-Reject |
 
 ## Server Options
 
