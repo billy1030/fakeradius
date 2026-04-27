@@ -1,0 +1,14 @@
+# Source code
+cmd/
+go.mod
+go.sum
+
+# Planning
+.planning/
+
+# Logs
+*.log
+
+# All markdown except README
+*.md
+!README.md
