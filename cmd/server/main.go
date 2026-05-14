@@ -98,7 +98,7 @@ func main() {
 		logger.Print("  Log file:       %s", *logFile)
 	}
 	logger.Print("")
-	logger.Print("  Auth Modes:     PAP, CHAP, MS-CHAP v1/v2")
+	logger.Print("  Auth Modes:    PAP, CHAP, MS-CHAP v1/v2")
 	logger.Print("  Auth Logic:    Allow all except 'no_' prefix")
 	logger.Print("  Reject Usernames: no_admin, no_user, no_* (any)")
 	logger.Print("")
