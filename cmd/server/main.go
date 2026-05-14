@@ -92,14 +92,15 @@ func main() {
 	logger.Print("  Fake RADIUS Server")
 	logger.Print("═══════════════════════════════════════════════════════")
 	logger.Print("")
-	logger.Print("  Listening:     %s", *addr)
+	logger.Print("  Listening:      %s", *addr)
 	logger.Print("  Shared secret:  %s", *secret)
 	if *logFile != "" {
 		logger.Print("  Log file:       %s", *logFile)
 	}
 	logger.Print("")
-	logger.Print("  Auth Modes:    PAP, CHAP, MS-CHAP v1/v2")
-	logger.Print("  Auth Logic:    Allow all except 'no_' prefix")
+	logger.Print("  Auth Modes:     PAP, CHAP, MS-CHAP v1/v2")
+	logger.Print("  Auth Logic:     Allow all except 'no_' prefix")
+        logger.Print("  Allow Username:   Any username not start with "no_" )
 	logger.Print("  Reject Usernames: no_admin, no_user, no_* (any)")
 	logger.Print("")
 	logger.Print("  Note: If you encounter timeouts (Disable UDP Checksum Offloading):")
