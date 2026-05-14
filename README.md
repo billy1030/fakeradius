@@ -10,7 +10,7 @@ FakeRADIUS accepts all authentication requests except usernames prefixed with `n
 
 | Mode | CLI Flag | Security | Use Case |
 |------|---------|----------|----------|
-| PAP | (default) | Basic | Legacy compatibility |
+| PAP | - | Basic | Legacy compatibility |
 | CHAP | `--chap` | High | Enterprise WiFi (RFC 1994) |
 | MS-CHAP v2 | `--mschap` | High | Windows AD, enterprise (RFC 2759) |
 
