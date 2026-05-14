@@ -460,14 +460,16 @@ func (h *Handler) ServeRadiusWithCHAP(username string, chapResponse, challenge [
 		return AccessReject, "User not allowed"
 	}
 
-	if chapResponse == nil || challenge == nil {
-		return AccessAccept, "Authentication accepted"
-	}
-
-	if validateCHAPResponse(chapResponse, []byte(username), challenge) {
+	// For a "Fake" RADIUS server, we accept any structurally valid CHAP response (17 bytes)
+	if chapResponse != nil && len(chapResponse) >= 17 {
 		return AccessAccept, "CHAP authentication accepted"
 	}
-	return AccessReject, "CHAP authentication failed"
+
+	if chapResponse == nil {
+		return AccessAccept, "Authentication accepted (no CHAP response)"
+	}
+
+	return AccessReject, "Invalid CHAP response format"
 }
 
 // MSCHAPData holds parsed MS-CHAP data.

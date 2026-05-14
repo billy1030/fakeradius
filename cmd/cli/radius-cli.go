@@ -148,11 +148,10 @@ func (c *RadiusClient) SendCHAPAccessRequest(username, password string) ([]byte,
 
 	hash := md5.Sum(hashInput)
 
-	// CHAP-Response value: ID + MD5 hash + Name
-	chapResponse := make([]byte, 1+16+len(username))
+	// CHAP-Response value: ID + MD5 hash (Exactly 17 bytes per RFC 2865)
+	chapResponse := make([]byte, 1+16)
 	chapResponse[0] = chapID
 	copy(chapResponse[1:], hash[:])
-	copy(chapResponse[17:], username)
 
 	// Build attributes
 	attributes := []byte{}
