@@ -116,7 +116,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	logger.Print("Listening on %s", conn.LocalAddr())
+	logger.Print("  Listening on %s", conn.LocalAddr())
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
