@@ -10,4 +10,9 @@
 # All markdown except README
 *.md
 !README.md
+# AI and Metadata
+.claude/
+.review/
 .deepseek/
+.planning/
+scratch/

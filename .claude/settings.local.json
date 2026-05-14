@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(rm -rf /c/Users/billy.kp.lam/.claude/plugins/marketplaces/mempalace)",
-      "Bash(rm -rf /c/Users/billy.kp.lam/.claude/plugins/data/mempalace-mempalace)",
-      "Bash(rm -rf /c/Users/billy.kp.lam/.claude/plugins/cache/mempalace)"
-    ]
-  }
-}
