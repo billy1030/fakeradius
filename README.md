@@ -43,7 +43,7 @@ sudo ethtool -K ens33 tx off
 #### 2. Bind to a Specific IP (Recommended)
 Firewalls often ignore RADIUS responses if the source IP does not match the IP they sent the request to. It is **highly recommended** to use the `-a` flag to bind to the specific interface IP:
 ```bash
-./fakeradius-server -s testing123 -a 172.22.30.47:1812 -v
+./fakeradius-server -s testing123 -a 192.168.1.100:1812 -v
 ```
 
 #### 3. Minimalist Responses
