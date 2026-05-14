@@ -102,6 +102,9 @@ func main() {
 	logger.Print("  Auth Logic:    Allow all except 'no_' prefix")
 	logger.Print("  Reject Usernames: no_admin, no_user, no_* (any)")
 	logger.Print("")
+	logger.Print("  Note: If you encounter timeouts on Linux/VMware, run:")
+	logger.Print("        sudo ethtool -K <interface> tx off")
+	logger.Print("")
 	logger.Print("  Ready to accept connections...")
 	logger.Print("═══════════════════════════════════════════════════════")
 
