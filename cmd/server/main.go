@@ -104,6 +104,8 @@ func main() {
 	logger.Print("")
 	logger.Print("  Disclaimer: This is a testing tool. Use at your own risk.")
 	logger.Print("")
+	logger.Print("  Note: Use -a <IP:Port> to bind to a specific server address.")
+	logger.Print("")
 	logger.Print("  Note: If you encounter timeouts (Disable UDP Checksum Offloading):")
 	logger.Print("        sudo ethtool -K <interface> tx off")
 	logger.Print("")
