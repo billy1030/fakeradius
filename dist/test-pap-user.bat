@@ -4,7 +4,7 @@ REM Usage: test-pap-user.bat [username] [secret] [server]
 REM Default: username="alice", secret="testing123", server="127.0.0.1:1812"
 
 set USERNAME=%1
-if "%USERNAME%"=="" set USERNAME=alice
+if "%USERNAME%"=="" set USERNAME=peter
 
 set SECRET=%2
 if "%SECRET%"=="" set SECRET=testing123

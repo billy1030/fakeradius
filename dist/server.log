@@ -61,3 +61,98 @@
 [2026-04-27 17:50:56.671] === Sent Access-Reject to 127.0.0.1:57930 ===
 [2026-04-27 17:50:56.671] Reply-Message: User not allowed
 [2026-04-27 17:50:56.671] 
+[2026-04-27 18:15:08.091] === Received packet from 127.0.0.1:57166 (74 bytes) ===
+[2026-04-27 18:15:08.091] Request: Code=1, Identifier=0, Length=74
+[2026-04-27 18:15:08.091] Message-Authenticator: valid
+[2026-04-27 18:15:08.092] Username: alice
+[2026-04-27 18:15:08.092] === Sent Access-Accept to 127.0.0.1:57166 ===
+[2026-04-27 18:15:08.092] Reply-Message: Authentication accepted
+[2026-04-27 18:15:08.092] 
+[2026-04-27 18:15:19.098] === Received packet from 127.0.0.1:64566 (74 bytes) ===
+[2026-04-27 18:15:19.098] Request: Code=1, Identifier=0, Length=74
+[2026-04-27 18:15:19.098] Message-Authenticator: valid
+[2026-04-27 18:15:19.098] Username: alice
+[2026-04-27 18:15:19.099] === Sent Access-Accept to 127.0.0.1:64566 ===
+[2026-04-27 18:15:19.099] Reply-Message: Authentication accepted
+[2026-04-27 18:15:19.099] 
+[2026-04-27 18:15:33.298] === Received packet from 127.0.0.1:64567 (77 bytes) ===
+[2026-04-27 18:15:33.298] Request: Code=1, Identifier=0, Length=77
+[2026-04-27 18:15:33.298] Message-Authenticator: valid
+[2026-04-27 18:15:33.298] Username: no_admin
+[2026-04-27 18:15:33.298] === Sent Access-Reject to 127.0.0.1:64567 ===
+[2026-04-27 18:15:33.298] Reply-Message: User not allowed
+[2026-04-27 18:15:33.298] 
+[2026-04-28 16:01:19.774] Fake RADIUS Server starting on :1812
+[2026-04-28 16:01:19.779] Shared secret: testing123
+[2026-04-28 16:01:19.779] Logging to file: server.log
+[2026-04-28 16:01:19.782] Listening on [::]:1812
+[2026-04-28 16:01:27.785] Shutting down...
+[2026-04-28 16:07:46.256] Fake RADIUS Server starting on :1812
+[2026-04-28 16:07:46.262] Shared secret: testing123
+[2026-04-28 16:07:46.262] Logging to file: server.log
+[2026-04-28 16:07:46.264] Listening on [::]:1812
+[2026-04-28 16:08:16.288] === Received packet from 127.0.0.1:50862 (109 bytes) ===
+[2026-04-28 16:08:16.288] Request: Code=1, Identifier=0, Length=109
+[2026-04-28 16:08:16.288] Message-Authenticator: valid
+[2026-04-28 16:08:16.289] Username: no_admin
+[2026-04-28 16:08:16.289] CHAP authentication detected
+[2026-04-28 16:08:16.289] === Sent Access-Reject to 127.0.0.1:50862 ===
+[2026-04-28 16:08:16.289] Reply-Message: CHAP authentication failed
+[2026-04-28 16:08:16.289] 
+[2026-04-28 16:08:27.018] === Received packet from 127.0.0.1:51338 (103 bytes) ===
+[2026-04-28 16:08:27.018] Request: Code=1, Identifier=0, Length=103
+[2026-04-28 16:08:27.018] Message-Authenticator: valid
+[2026-04-28 16:08:27.018] Username: alice
+[2026-04-28 16:08:27.019] CHAP authentication detected
+[2026-04-28 16:08:27.019] === Sent Access-Reject to 127.0.0.1:51338 ===
+[2026-04-28 16:08:27.019] Reply-Message: CHAP authentication failed
+[2026-04-28 16:08:27.019] 
+[2026-04-28 16:09:34.176] === Received packet from 127.0.0.1:53632 (131 bytes) ===
+[2026-04-28 16:09:34.177] Request: Code=1, Identifier=0, Length=131
+[2026-04-28 16:09:34.177] Message-Authenticator: valid
+[2026-04-28 16:09:34.177] Username: no_admin
+[2026-04-28 16:09:34.177] MS-CHAP authentication detected
+[2026-04-28 16:09:34.177] === Sent Access-Accept to 127.0.0.1:53632 ===
+[2026-04-28 16:09:34.177] Reply-Message: MS-CHAP v3 authentication accepted
+[2026-04-28 16:09:34.177] 
+[2026-04-28 16:09:44.079] === Received packet from 127.0.0.1:53633 (125 bytes) ===
+[2026-04-28 16:09:44.079] Request: Code=1, Identifier=0, Length=125
+[2026-04-28 16:09:44.079] Message-Authenticator: valid
+[2026-04-28 16:09:44.079] Username: alice
+[2026-04-28 16:09:44.079] MS-CHAP authentication detected
+[2026-04-28 16:09:44.079] === Sent Access-Accept to 127.0.0.1:53633 ===
+[2026-04-28 16:09:44.079] Reply-Message: MS-CHAP v3 authentication accepted
+[2026-04-28 16:09:44.079] 
+[2026-04-28 16:37:38.466] ═══════════════════════════════════════════════════════
+[2026-04-28 16:37:38.471]   Fake RADIUS Server
+[2026-04-28 16:37:38.471] ═══════════════════════════════════════════════════════
+[2026-04-28 16:37:38.471] 
+[2026-04-28 16:37:38.471]   Listening:     :1812
+[2026-04-28 16:37:38.472]   Shared secret:  testing123
+[2026-04-28 16:37:38.472]   Log file:       server.log
+[2026-04-28 16:37:38.472] 
+[2026-04-28 16:37:38.472]   Auth Modes:     PAP (default), CHAP, MS-CHAP v1/v2
+[2026-04-28 16:37:38.472]   Auth Logic:    Allow all except 'no_' prefix
+[2026-04-28 16:37:38.472]   Reject Usernames: no_admin, no_user, no_* (any)
+[2026-04-28 16:37:38.472] 
+[2026-04-28 16:37:38.472]   Ready to accept connections...
+[2026-04-28 16:37:38.472] ═══════════════════════════════════════════════════════
+[2026-04-28 16:38:02.196] ═══════════════════════════════════════════════════════
+[2026-04-28 16:38:02.199]   Fake RADIUS Server
+[2026-04-28 16:38:02.199] ═══════════════════════════════════════════════════════
+[2026-04-28 16:38:02.199] 
+[2026-04-28 16:38:02.199]   Listening:     :1812
+[2026-04-28 16:38:02.199]   Shared secret:  testing123
+[2026-04-28 16:38:02.199]   Log file:       server.log
+[2026-04-28 16:38:02.199] 
+[2026-04-28 16:38:02.199]   Auth Modes:     PAP (default), CHAP, MS-CHAP v1/v2
+[2026-04-28 16:38:02.199]   Auth Logic:    Allow all except 'no_' prefix
+[2026-04-28 16:38:02.199]   Reject Usernames: no_admin, no_user, no_* (any)
+[2026-04-28 16:38:02.200] 
+[2026-04-28 16:38:02.200]   Ready to accept connections...
+[2026-04-28 16:38:02.200] ═══════════════════════════════════════════════════════
+[2026-04-28 16:38:02.201] Listening on [::]:1812
+[2026-04-28 16:38:24.809] [127.0.0.1:60231] Access-Reject | Auth: CHAP | User: no_admin | Id: 0 | Len: 109 bytes | Reject: CHAP authentication failed
+[2026-04-28 16:38:43.996] [127.0.0.1:62415] Access-Accept | Auth: MS-CHAP | User: alice | Id: 0 | Len: 125 bytes | Msg: MS-CHAP v3 authentication accepted
+[2026-04-28 16:42:55.627] [127.0.0.1:61137] Access-Accept | Auth: PAP | User: peter | Id: 0 | Len: 74 bytes | Msg: Authentication accepted
+[2026-04-28 17:33:05.175] Shutting down...

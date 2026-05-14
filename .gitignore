@@ -1,7 +1,5 @@
-# Source code
-cmd/
-go.mod
-go.sum
+# Source code — tracked now for version control
+# cmd/ removed: source files are tracked
 
 # Planning
 .planning/
@@ -12,3 +10,4 @@ go.sum
 # All markdown except README
 *.md
 !README.md
+.deepseek/

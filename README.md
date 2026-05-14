@@ -14,6 +14,26 @@ FakeRADIUS accepts all authentication requests except usernames prefixed with `n
 | CHAP | `--chap` | High | Enterprise WiFi (RFC 1994) |
 | MS-CHAP v2 | `--mschap` | High | Windows AD, enterprise (RFC 2759) |
 
+### Firewall Compatibility & Troubleshooting
+
+If you are using this server with strict firewalls (like Palo Alto Networks), you may encounter "Timeout" or "Invalid Authenticator" errors. Follow these steps:
+
+#### 1. Disable UDP Checksum Offloading
+In virtualized environments (VMware), the virtual NIC may fail to calculate UDP checksums, leading the firewall to drop packets.
+```bash
+# Run on the Linux server
+sudo ethtool -K ens33 tx off
+```
+
+#### 2. Bind to a Specific IP
+Firewalls often ignore RADIUS responses if the source IP does not match the IP they sent the request to. Use the `-a` flag to bind to the specific interface IP:
+```bash
+./fakeradius-server -s testing123 -a 172.22.30.47:1812 -v
+```
+
+#### 3. Minimalist Responses
+This server uses a **minimalist `Access-Accept`** strategy by default (sending only the header with no attributes). This ensures maximum compatibility with firewalls that get confused by `Message-Authenticator` attributes in response packets.
+
 ## Binaries
 
 Pre-built binaries for all platforms are in `dist/multi/`:
