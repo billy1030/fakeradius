@@ -194,3 +194,83 @@
 [2026-05-14 15:47:38.143] ═══════════════════════════════════════════════════════
 [2026-05-14 15:47:38.145] Listening on [::]:1812
 [2026-05-14 15:48:49.171] Shutting down...
+[2026-05-14 15:54:30.295] ═══════════════════════════════════════════════════════
+[2026-05-14 15:54:30.296]   Fake RADIUS Server
+[2026-05-14 15:54:30.296] ═══════════════════════════════════════════════════════
+[2026-05-14 15:54:30.296] 
+[2026-05-14 15:54:30.296]   Listening:      :1812
+[2026-05-14 15:54:30.296]   Shared secret:  testing123
+[2026-05-14 15:54:30.296]   Log file:       server.log
+[2026-05-14 15:54:30.296] 
+[2026-05-14 15:54:30.296]   Auth Modes:     PAP, CHAP, MS-CHAP v1/v2
+[2026-05-14 15:54:30.296]   Auth Logic:     Allow all except 'no_' prefix
+[2026-05-14 15:54:30.296]   Reject Usernames: no_admin, no_user, no_* (any)
+[2026-05-14 15:54:30.296] 
+[2026-05-14 15:54:30.296]   Disclaimer: This is a testing tool. Use at your own risk.
+[2026-05-14 15:54:30.296] 
+[2026-05-14 15:54:30.296]   Note: If you encounter timeouts (Disable UDP Checksum Offloading):
+[2026-05-14 15:54:30.296]         sudo ethtool -K <interface> tx off
+[2026-05-14 15:54:30.296] 
+[2026-05-14 15:54:30.296]   Ready to accept connections...
+[2026-05-14 15:54:30.296] ═══════════════════════════════════════════════════════
+[2026-05-14 15:54:30.298] Listening on [::]:1812
+[2026-05-14 15:56:21.342] Shutting down...
+[2026-05-14 15:57:55.298] ═══════════════════════════════════════════════════════
+[2026-05-14 15:57:55.300]   Fake RADIUS Server v0.1a
+[2026-05-14 15:57:55.300] ═══════════════════════════════════════════════════════
+[2026-05-14 15:57:55.300] 
+[2026-05-14 15:57:55.300]   Listening:      :1812
+[2026-05-14 15:57:55.300]   Shared secret:  testing123
+[2026-05-14 15:57:55.300]   Log file:       server.log
+[2026-05-14 15:57:55.300] 
+[2026-05-14 15:57:55.300]   Auth Modes:     PAP, CHAP, MS-CHAP v1/v2
+[2026-05-14 15:57:55.300]   Auth Logic:     Allow all except 'no_' prefix
+[2026-05-14 15:57:55.300]   Reject Usernames: no_admin, no_user, no_* (any)
+[2026-05-14 15:57:55.300] 
+[2026-05-14 15:57:55.300]   Disclaimer: This is a testing tool. Use at your own risk.
+[2026-05-14 15:57:55.300] 
+[2026-05-14 15:57:55.300]   Note: Use -a <IP:Port> to bind to a specific server address.
+[2026-05-14 15:57:55.300] 
+[2026-05-14 15:57:55.300]   Note: If you encounter timeouts (Disable UDP Checksum Offloading):
+[2026-05-14 15:57:55.300]         sudo ethtool -K <interface> tx off
+[2026-05-14 15:57:55.301] 
+[2026-05-14 15:57:55.301]   Ready to accept connections...
+[2026-05-14 15:57:55.301] ═══════════════════════════════════════════════════════
+[2026-05-14 15:57:55.305]   Listening on [::]:1812
+[2026-05-14 15:59:28.341] Shutting down...
+[2026-05-14 15:59:40.423] ═══════════════════════════════════════════════════════
+[2026-05-14 15:59:40.424]   Fake RADIUS Server v0.1a
+[2026-05-14 15:59:40.424] ═══════════════════════════════════════════════════════
+[2026-05-14 15:59:40.425] 
+[2026-05-14 15:59:40.425]   Listening:      :1812
+[2026-05-14 15:59:40.425]   Shared secret:  testing123
+[2026-05-14 15:59:40.425]   Log file:       server.log
+[2026-05-14 15:59:40.425] 
+[2026-05-14 15:59:40.425]   Auth Modes:     PAP, CHAP, MS-CHAP v1/v2
+[2026-05-14 15:59:40.425]   Auth Logic:     Allow all except 'no_' prefix
+[2026-05-14 15:59:40.425]   Reject Usernames: no_admin, no_user, no_* (any)
+[2026-05-14 15:59:40.425] 
+[2026-05-14 15:59:40.425]   Disclaimer: This is a testing tool. Use at your own risk.
+[2026-05-14 15:59:40.425] 
+[2026-05-14 15:59:40.425]   Note: Use -a <IP:Port> to bind to a specific server address (recommended).
+[2026-05-14 15:59:40.425]         If you encounter timeouts (Disable UDP Checksum Offloading):
+[2026-05-14 15:59:40.425]         sudo ethtool -K <interface> tx off
+[2026-05-14 15:59:40.425] 
+[2026-05-14 15:59:40.425]   Ready to accept connections...
+[2026-05-14 15:59:40.426] ═══════════════════════════════════════════════════════
+[2026-05-14 15:59:40.428]   Listening on [::]:1812
+[2026-05-14 16:01:52.488] [127.0.0.1:60730] MA Algorithm detected: md5
+[2026-05-14 16:01:52.488] [127.0.0.1:60730] Access-Reject | Auth: CHAP | User: no_admin | Id: 0 | Len: 109 bytes | Reject: User not allowed
+[2026-05-14 16:02:04.835] [127.0.0.1:64582] MA Algorithm detected: md5
+[2026-05-14 16:02:04.835] [127.0.0.1:64582] Access-Reject | Auth: CHAP | User: alice | Id: 0 | Len: 103 bytes | Reject: CHAP authentication failed
+[2026-05-14 16:05:28.244] [127.0.0.1:56191] MA Algorithm detected: md5
+[2026-05-14 16:05:28.244] [127.0.0.1:56191] Access-Reject | Auth: CHAP | User: alice | Id: 0 | Len: 98 bytes | Reject: CHAP authentication failed
+[2026-05-14 16:05:30.600] [127.0.0.1:50662] MA Algorithm detected: md5
+[2026-05-14 16:05:30.601] [127.0.0.1:50662] Access-Reject | Auth: CHAP | User: alice | Id: 0 | Len: 98 bytes | Reject: CHAP authentication failed
+[2026-05-14 16:05:33.969] [127.0.0.1:56418] MA Algorithm detected: md5
+[2026-05-14 16:05:33.969] [127.0.0.1:56418] Access-Reject | Auth: CHAP | User: alice | Id: 0 | Len: 98 bytes | Reject: CHAP authentication failed
+[2026-05-14 16:05:42.852] [127.0.0.1:63328] MA Algorithm detected: md5
+[2026-05-14 16:05:42.852] [127.0.0.1:63328] Access-Reject | Auth: CHAP | User: no_admin | Id: 0 | Len: 101 bytes | Reject: User not allowed
+[2026-05-14 16:06:07.547] [127.0.0.1:59425] MA Algorithm detected: md5
+[2026-05-14 16:06:07.548] [127.0.0.1:59425] Access-Reject | Auth: CHAP | User: alice | Id: 0 | Len: 98 bytes | Reject: CHAP authentication failed
+[2026-05-14 16:06:59.568] Shutting down...
