@@ -89,7 +89,7 @@ func main() {
 	defer logger.Close()
 
 	logger.Print("═══════════════════════════════════════════════════════")
-	logger.Print("  Fake RADIUS Server")
+	logger.Print("  Fake RADIUS Server v0.1a")
 	logger.Print("═══════════════════════════════════════════════════════")
 	logger.Print("")
 	logger.Print("  Listening:      %s", *addr)
