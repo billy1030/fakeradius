@@ -8,11 +8,11 @@ FakeRADIUS accepts all authentication requests except usernames prefixed with `n
 
 ## Supported Authentication Modes
 
-| Mode | CLI Flag | Security | Use Case |
+| Mode | Support | Security | Use Case |
 |------|---------|----------|----------|
-| PAP | - | Basic | Legacy compatibility |
-| CHAP | `--chap` | High | Enterprise WiFi (RFC 1994) |
-| MS-CHAP v2 | `--mschap` | High | Windows AD, enterprise (RFC 2759) |
+| PAP | Automatic | Basic | Legacy compatibility |
+| CHAP | Automatic | High | Enterprise WiFi (RFC 1994) |
+| MS-CHAP v2 | Automatic | High | Windows AD, enterprise (RFC 2759) |
 
 ## RADIUS Message Authentication
 
