@@ -14,6 +14,21 @@ FakeRADIUS accepts all authentication requests except usernames prefixed with `n
 | CHAP | `--chap` | High | Enterprise WiFi (RFC 1994) |
 | MS-CHAP v2 | `--mschap` | High | Windows AD, enterprise (RFC 2759) |
 
+## RADIUS Message Authentication
+
+This server strictly adheres to RFC 2865 and RFC 2869 for secure packet validation. Key components include:
+
+| Component | Logic | Description |
+|-----------|-------|-------------|
+| **Shared Secret** | `string` | The common password shared between the client (Firewall) and this server. |
+| **Request Authenticator** | `random(16)` | A random 16-byte value sent by the client in the header of every request. |
+| **Response Authenticator** | `MD5(Code + ID + Len + ReqAuth + Attrs + Secret)` | Proves the response came from someone who knows the secret. |
+| **Message-Authenticator** | `HMAC-MD5(Packet, Secret)` | A digital signature (Attribute 80) that protects the entire packet from tampering. |
+| **Password (PAP)** | `Password XOR MD5(Secret + ReqAuth)` | Passwords are never sent in cleartext, even in PAP mode. |
+
+> [!NOTE]
+> To ensure maximum compatibility with strict firewalls (like Palo Alto), this server uses a **minimalist `Access-Accept`** strategy, omitting optional attributes to prevent signature verification timeouts.
+
 ### Firewall Compatibility & Troubleshooting
 
 If you are using this server with strict firewalls (like Palo Alto Networks), you may encounter "Timeout" or "Invalid Authenticator" errors. Follow these steps:
