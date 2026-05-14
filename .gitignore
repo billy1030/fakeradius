@@ -1,18 +1,29 @@
-# Source code — tracked now for version control
-# cmd/ removed: source files are tracked
-
-# Planning
-.planning/
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 
 # Logs
 *.log
+dist/server.log
 
-# All markdown except README
-*.md
-!README.md
-# AI and Metadata
+# AI/Metadata (untracked per user request)
 .claude/
 .review/
 .deepseek/
 .planning/
 scratch/
+
+# Markdown (ignoring debug files except README)
+*.md
+!README.md
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Go
+vendor/
