@@ -450,7 +450,7 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 			
 			// Send TTLS Start
 			ttlsStart := []byte{TTLSFlagStart}
-			eapResp = buildEAPPacket(EAPResponse, eapID+1, ETypeTTLS, ttlsStart)
+			eapResp = buildEAPPacket(EAPRequest, eapID+1, ETypeTTLS, ttlsStart)
 			session.ID = eapID + 1
 			session.Type = ETypeTTLS
 			
@@ -466,16 +466,16 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 	if eapResp != nil {
 		resp := buildResponsePacket(packet, secret, respCode, packet[1], "")
 		
-		// Add EAP-Message attribute
+		// Add EAP-Message attribute (Recommended to be first)
 		eapAttr := buildAttribute(EAPMessageType, eapResp)
 		resp = append(resp, eapAttr...)
 		
-		// Add State attribute (RFC-compliant session tracking)
-		stateVal := []byte(fmt.Sprintf("session-%s-%d", clientAddr.IP, eapID))
+		// Add State attribute (Simple hex tracking)
+		stateVal := []byte(fmt.Sprintf("%02x%08x", eapID, time.Now().UnixNano()))
 		stateAttr := buildAttribute(StateAttributeType, stateVal)
 		resp = append(resp, stateAttr...)
 		
-		// Add Message-Authenticator (must be recalculated after all attributes are added)
+		// Add Message-Authenticator (Must be last)
 		ma := calculateMessageAuthenticator(resp[0], resp[1], uint16(len(resp)+18), resp[4:20], secret, resp[20:])
 		resp = append(resp, buildAttribute(MessageAuthenticatorType, ma)...)
 		
