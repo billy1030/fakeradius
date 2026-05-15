@@ -464,25 +464,51 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 	}
 
 	if eapResp != nil {
-		resp := buildResponsePacket(packet, secret, respCode, packet[1], "")
+		// 1. Create the base attributes list
+		var attributes []byte
 		
-		// Add EAP-Message attribute (Recommended to be first)
-		eapAttr := buildAttribute(EAPMessageType, eapResp)
-		resp = append(resp, eapAttr...)
+		// Add EAP-Message attribute (First)
+		attributes = append(attributes, buildAttribute(EAPMessageType, eapResp)...)
 		
-		// Add State attribute (Simple hex tracking)
+		// Add State attribute
 		stateVal := []byte(fmt.Sprintf("%02x%08x", eapID, time.Now().UnixNano()))
-		stateAttr := buildAttribute(StateAttributeType, stateVal)
-		resp = append(resp, stateAttr...)
+		attributes = append(attributes, buildAttribute(StateAttributeType, stateVal)...)
 		
-		// Add Message-Authenticator (Must be last)
-		ma := calculateMessageAuthenticator(resp[0], resp[1], uint16(len(resp)+18), resp[4:20], secret, resp[20:])
-		resp = append(resp, buildAttribute(MessageAuthenticatorType, ma)...)
+		// Add Message-Authenticator (Zeroed out for calculation)
+		zeroMA := make([]byte, 16)
+		attributes = append(attributes, buildAttribute(MessageAuthenticatorType, zeroMA)...)
 		
-		// Update length
-		binary.BigEndian.PutUint16(resp[2:4], uint16(len(resp)))
+		// 2. Calculate Message-Authenticator
+		// RFC 2869: Use Request Authenticator from original packet for MA calculation
+		requestAuth := packet[4:20]
+		totalLen := uint16(20 + len(attributes))
 		
-		conn.WriteToUDP(resp, clientAddr)
+		ma := calculateMessageAuthenticator(respCode, packet[1], totalLen, requestAuth, secret, attributes)
+		
+		// Replace the zeroed MA with the real one
+		copy(attributes[len(attributes)-16:], ma)
+		
+		// 3. Calculate Response Authenticator (The Header Signature)
+		// RFC 2865: MD5(Code + ID + Length + RequestAuth + Attributes + Secret)
+		authData := make([]byte, 4+16+len(attributes)+len(secret))
+		authData[0] = respCode
+		authData[1] = packet[1]
+		binary.BigEndian.PutUint16(authData[2:4], totalLen)
+		copy(authData[4:20], requestAuth)
+		copy(authData[20:20+len(attributes)], attributes)
+		copy(authData[20+len(attributes):], []byte(secret))
+		
+		respAuth := md5.Sum(authData)
+		
+		// 4. Assemble the final packet
+		finalPacket := make([]byte, totalLen)
+		finalPacket[0] = respCode
+		finalPacket[1] = packet[1]
+		binary.BigEndian.PutUint16(finalPacket[2:4], totalLen)
+		copy(finalPacket[4:20], respAuth[:])
+		copy(finalPacket[20:], attributes)
+		
+		conn.WriteToUDP(finalPacket, clientAddr)
 		logger.Print("[%s] %s | EAP: %s | Id: %d | User: %s", clientAddr, codeToString(respCode), "TTLS-Start", eapID, session.Username)
 	}
 }
