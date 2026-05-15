@@ -7,12 +7,15 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/md5"
+	"crypto/tls"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -20,6 +23,22 @@ import (
 )
 
 var verbose bool
+
+// EAPSession tracks the state of an ongoing EAP conversation.
+type EAPSession struct {
+	ID        byte
+	Type      byte
+	State     int // 0: Start, 1: Identity, 2: TLS-Handshake, 3: Authenticated
+	TLSBuffer []byte
+	Username  string
+	LastSeen  time.Time
+}
+
+var (
+	sessions  = make(map[string]*EAPSession)
+	sessionMu sync.Mutex
+	serverCert tls.Certificate
+)
 
 // Logger handles both console and file output with timestamps.
 type Logger struct {
@@ -72,12 +91,32 @@ func main() {
 	addr := pflag.StringP("addr", "a", ":1812", "Address to listen on")
 	logFile := pflag.StringP("log", "l", "", "Log file path (default: console only)")
 	pflag.BoolVarP(&verbose, "verbose", "v", false, "Enable detailed protocol debugging")
+	certFile := pflag.StringP("cert", "c", "cert/server.pem", "Path to server certificate")
+	keyFile := pflag.StringP("key", "k", "cert/server.key", "Path to server private key")
 
 	pflag.Parse()
+
+	// Load certificates for EAP-TTLS
+	var err error
+	serverCert, err = tls.LoadX509KeyPair(*certFile, *keyFile)
+	if err != nil {
+		// We don't exit here to allow standard PAP/CHAP to work even if certs are missing
+	}
 
 	if *secret == "" {
 		fmt.Fprintln(os.Stderr, "Error: -secret flag is required")
 		pflag.Usage()
+		os.Exit(1)
+	}
+
+	if *addr == "ddr" {
+		fmt.Fprintln(os.Stderr, "Error: Typo detected in address ('ddr').")
+		fmt.Fprintln(os.Stderr, "Did you use a single dash '-addr' by mistake? Please use double dashes '--addr' or shorthand '-a'.")
+		os.Exit(1)
+	}
+	if *secret == "ecret" {
+		fmt.Fprintln(os.Stderr, "Error: Typo detected in secret ('ecret').")
+		fmt.Fprintln(os.Stderr, "Did you use a single dash '-secret' by mistake? Please use double dashes '--secret' or shorthand '-s'.")
 		os.Exit(1)
 	}
 
@@ -98,7 +137,14 @@ func main() {
 		logger.Print("  Log file:       %s", *logFile)
 	}
 	logger.Print("")
-	logger.Print("  Auth Modes:     PAP, CHAP, MS-CHAP v1/v2")
+	if serverCert.Certificate != nil {
+		logger.Print("  Certificate:    %s [LOADED]", *certFile)
+	} else {
+		logger.Print("  Certificate:    %s [MISSING/INVALID]", *certFile)
+		logger.Print("  EAP-TTLS:       DISABLED")
+	}
+	logger.Print("  Private Key:    %s", *keyFile)
+	logger.Print("  Auth Modes:     PAP, CHAP, MS-CHAP v1/v2, EAP-TTLS")
 	logger.Print("  Auth Logic:     Allow all except 'no_' prefix")
 	logger.Print("  Reject Usernames: no_admin, no_user, no_* (any)")
 	logger.Print("")
@@ -206,6 +252,11 @@ func handlePacket(conn net.PacketConn, clientAddr net.Addr, packet []byte, secre
 		if detectedAlgo != "" {
 			logger.Print("[%s] MA Algorithm detected: %s", clientAddr, detectedAlgo)
 		}
+	}
+
+	if hasEAPAttributes(packet) {
+		handleEAP(conn.(*net.UDPConn), clientAddr.(*net.UDPAddr), packet, secret, logger)
+		return
 	}
 
 	username, err := extractUsername(packet)
@@ -356,3 +407,124 @@ func codeToString(code byte) string {
 		return fmt.Sprintf("Unknown(%d)", code)
 	}
 }
+
+func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret string, logger *Logger) {
+	eapData, err := extractEAPMessage(packet)
+	if err != nil {
+		logger.Print("[%s] EAP error: %v", clientAddr, err)
+		return
+	}
+
+	if len(eapData) < 4 {
+		return
+	}
+
+	eapCode := eapData[0]
+	eapID := eapData[1]
+	
+	sessionMu.Lock()
+	session, exists := sessions[clientAddr.String()]
+	if !exists {
+		session = &EAPSession{
+			ID:       eapID,
+			LastSeen: time.Now(),
+		}
+		sessions[clientAddr.String()] = session
+	}
+	session.LastSeen = time.Now()
+	sessionMu.Unlock()
+
+	var respCode byte = AccessChallenge
+	var eapResp []byte
+
+	switch eapCode {
+	case EAPResponse:
+		eapType := eapData[4]
+		switch eapType {
+		case EAPTypeIdentity:
+			session.Username = string(eapData[5:])
+			session.State = 1
+			logger.Print("[%s] EAP Identity: %s", clientAddr, session.Username)
+			
+			// Send TTLS Start
+			ttlsStart := []byte{TTLSFlagStart}
+			eapResp = buildEAPPacket(EAPResponse, eapID+1, ETypeTTLS, ttlsStart)
+			session.ID = eapID + 1
+			session.Type = ETypeTTLS
+			
+		case ETypeTTLS:
+			// TODO: Handle TLS Handshake fragments
+			logger.Print("[%s] EAP-TTLS Handshake starting...", clientAddr)
+		}
+
+	case EAPRequest:
+		// Should not happen on server
+	}
+
+	if eapResp != nil {
+		resp := buildResponsePacket(packet, secret, respCode, packet[1], "")
+		// Add EAP-Message attribute
+		eapAttr := buildAttribute(EAPMessageType, eapResp)
+		resp = append(resp, eapAttr...)
+		
+		// Add Message-Authenticator
+		ma := calculateMessageAuthenticator(resp[0], resp[1], uint16(len(resp)+18), resp[4:20], secret, resp[20:])
+		resp = append(resp, buildAttribute(MessageAuthenticatorType, ma)...)
+		
+		// Update length
+		binary.BigEndian.PutUint16(resp[2:4], uint16(len(resp)))
+		
+		conn.WriteToUDP(resp, clientAddr)
+		logger.Print("[%s] %s | EAP: %s | Id: %d", clientAddr, codeToString(respCode), "TTLS-Start", eapID)
+	}
+}
+
+func extractEAPMessage(packet []byte) ([]byte, error) {
+	var eapData []byte
+	pos := 20
+	for pos < len(packet) {
+		if pos+2 > len(packet) {
+			break
+		}
+		attrType := packet[pos]
+		attrLen := int(packet[pos+1])
+		if attrLen < 2 || pos+attrLen > len(packet) {
+			break
+		}
+		if attrType == EAPMessageType {
+			eapData = append(eapData, packet[pos+2:pos+attrLen]...)
+		}
+		pos += attrLen
+	}
+	if len(eapData) == 0 {
+		return nil, fmt.Errorf("EAP-Message attribute not found")
+	}
+	return eapData, nil
+}
+
+func buildEAPPacket(code, id byte, eapType byte, data []byte) []byte {
+	length := uint16(4)
+	if eapType != 0 {
+		length += 1 + uint16(len(data))
+	}
+	packet := make([]byte, length)
+	packet[0] = code
+	packet[1] = id
+	packet[2] = byte(length >> 8)
+	packet[3] = byte(length & 0xFF)
+	if eapType != 0 {
+		packet[4] = eapType
+		copy(packet[5:], data)
+	}
+	return packet
+}
+
+// Global constants used in EAP handler
+const (
+	EAPRequest  = 1
+	EAPResponse = 2
+	EAPTypeIdentity = 1
+	ETypeTTLS = 21
+	TTLSFlagStart = 0x20
+	AccessChallenge = 11
+)

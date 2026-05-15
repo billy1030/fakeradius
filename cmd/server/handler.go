@@ -22,7 +22,28 @@ const (
 	NASIdentifierType        = 32
 	ReplyMessageType         = 18
 	MessageAuthenticatorType = 80
+	EAPMessageType           = 79
 )
+
+// hasEAPAttributes checks if the packet contains an EAP-Message attribute.
+func hasEAPAttributes(packet []byte) bool {
+	pos := 20
+	for pos < len(packet) {
+		if pos+2 > len(packet) {
+			break
+		}
+		attrType := packet[pos]
+		attrLen := int(packet[pos+1])
+		if attrType == EAPMessageType {
+			return true
+		}
+		if attrLen < 2 || pos+attrLen > len(packet) {
+			break
+		}
+		pos += attrLen
+	}
+	return false
+}
 
 // CHAP attribute types (RFC 1994)
 const (
