@@ -1,6 +1,6 @@
 # FakeRADIUS
 
-A lightweight, self-contained RADIUS server for testing authentication clients. Supports **PAP**, **CHAP**, and **MS-CHAP** authentication modes.
+A lightweight, self-contained RADIUS server for testing authentication clients. Supports **PAP**, **CHAP**, **MS-CHAP**, and **EAP-TTLS** authentication modes.
 
 ## Overview
 
@@ -13,6 +13,7 @@ FakeRADIUS accepts all authentication requests except usernames prefixed with `n
 | PAP | Automatic | Basic | Legacy compatibility |
 | CHAP | Automatic | High | Enterprise WiFi (RFC 1994) |
 | MS-CHAP v2 | Automatic | High | Windows AD, enterprise (RFC 2759) |
+| EAP-TTLS | Automatic | Very High | Secure Tunneled Auth (Preview) |
 
 ## RADIUS Message Authentication
 
@@ -71,6 +72,8 @@ Test scripts for each authentication mode:
 | `test-chap-no-user` | CHAP | Access-Reject |
 | `test-mschap-user` | MS-CHAP | Access-Accept |
 | `test-mschap-no-user` | MS-CHAP | Access-Reject |
+| `test-ttls-no-ca` | EAP-TTLS | UNTRUSTED status |
+| `test-ttls-with-ca` | EAP-TTLS | TRUSTED status |
 
 Usage:
 ```bash
@@ -117,6 +120,11 @@ radius-cli --username alice --password StrongPass123! --secret testing123 --chap
 radius-cli --username alice --password StrongPass123! --secret testing123 --mschap
 ```
 
+**EAP-TTLS with Certificate Verification:**
+```bash
+radius-cli --username alice --password test --secret testing123 --ttls --ca ca.pem
+```
+
 **Test rejected user (no_ prefix):**
 ```bash
 radius-cli --username no_admin --password test --secret testing123
@@ -152,6 +160,9 @@ radius-cli --username alice --password test --secret testing123 --server 192.168
 | `--server` | RADIUS server IP:Port | `127.0.0.1:1812` |
 | `--chap` | Use CHAP authentication | false |
 | `--mschap` | Use MS-CHAP authentication | false |
+| `--pap` | Use PAP authentication | true (default) |
+| `--ttls` | Use EAP-TTLS authentication | false |
+| `--ca` | Path to CA root certificate | - |
 
 ## Features
 

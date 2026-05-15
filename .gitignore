@@ -27,3 +27,11 @@ Thumbs.db
 
 # Go
 vendor/
+
+# Certificates and Keys
+*.pem
+*.p7b
+*.pfx
+*.csr
+*.srl
+*.key
