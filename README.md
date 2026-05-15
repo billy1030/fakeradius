@@ -13,7 +13,7 @@ FakeRADIUS accepts all authentication requests except usernames prefixed with `n
 | PAP | Automatic | Basic | Legacy compatibility |
 | CHAP | Automatic | High | Enterprise WiFi (RFC 1994) |
 | MS-CHAP v2 | Automatic | High | Windows AD, enterprise (RFC 2759) |
-| EAP-TTLS | Automatic | Very High | Secure Tunneled Auth (Preview) |
+| EAP-TTLS | Automatic | Very High | Secure Tunneled Auth |
 
 ## RADIUS Message Authentication
 
@@ -49,6 +49,11 @@ Firewalls often ignore RADIUS responses if the source IP does not match the IP t
 
 #### 3. Minimalist Responses
 This server uses a **minimalist `Access-Accept`** strategy by default (sending only the header with no attributes). This ensures maximum compatibility with firewalls that get confused by `Message-Authenticator` attributes in response packets.
+
+#### 4. Flag Syntax Typo (Single vs Double Dash)
+If you use a single dash for long flags (e.g., `-addr` instead of `--addr`), the program might misinterpret the flag. The server includes **Typo Protection** to catch this, but always use:
+*   **Correct**: `--addr :1812` or `-a :1812`
+*   **Incorrect**: `-addr :1812` (This will be read as `-a` with value `ddr`)
 
 ## Binaries
 
@@ -149,6 +154,8 @@ radius-cli --username alice --password test --secret testing123 --server 192.168
 | `--secret` | Shared secret (required) | - |
 | `--addr` | Listen address (IP:Port) | `:1812` |
 | `--log` | Log file path | console only |
+| `--cert` | Path to server certificate | `cert/server.pem` |
+| `--key` | Path to server private key | `cert/server.key` |
 
 ## CLI Options
 
