@@ -403,6 +403,8 @@ func codeToString(code byte) string {
 		return "Access-Accept"
 	case AccessReject:
 		return "Access-Reject"
+	case AccessChallenge:
+		return "Access-Challenge"
 	default:
 		return fmt.Sprintf("Unknown(%d)", code)
 	}
@@ -463,11 +465,17 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 
 	if eapResp != nil {
 		resp := buildResponsePacket(packet, secret, respCode, packet[1], "")
+		
 		// Add EAP-Message attribute
 		eapAttr := buildAttribute(EAPMessageType, eapResp)
 		resp = append(resp, eapAttr...)
 		
-		// Add Message-Authenticator
+		// Add State attribute (RFC-compliant session tracking)
+		stateVal := []byte(fmt.Sprintf("session-%s-%d", clientAddr.IP, eapID))
+		stateAttr := buildAttribute(StateAttributeType, stateVal)
+		resp = append(resp, stateAttr...)
+		
+		// Add Message-Authenticator (must be recalculated after all attributes are added)
 		ma := calculateMessageAuthenticator(resp[0], resp[1], uint16(len(resp)+18), resp[4:20], secret, resp[20:])
 		resp = append(resp, buildAttribute(MessageAuthenticatorType, ma)...)
 		
@@ -475,7 +483,7 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 		binary.BigEndian.PutUint16(resp[2:4], uint16(len(resp)))
 		
 		conn.WriteToUDP(resp, clientAddr)
-		logger.Print("[%s] %s | EAP: %s | Id: %d", clientAddr, codeToString(respCode), "TTLS-Start", eapID)
+		logger.Print("[%s] %s | EAP: %s | Id: %d | User: %s", clientAddr, codeToString(respCode), "TTLS-Start", eapID, session.Username)
 	}
 }
 

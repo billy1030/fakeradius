@@ -23,6 +23,7 @@ const (
 	ReplyMessageType         = 18
 	MessageAuthenticatorType = 80
 	EAPMessageType           = 79
+	StateAttributeType       = 24
 )
 
 // hasEAPAttributes checks if the packet contains an EAP-Message attribute.
