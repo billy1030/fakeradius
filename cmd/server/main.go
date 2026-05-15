@@ -29,9 +29,14 @@ type EAPSession struct {
 	ID        byte
 	Type      byte
 	State     int // 0: Start, 1: Identity, 2: TLS-Handshake, 3: Authenticated
-	TLSBuffer []byte
 	Username  string
 	LastSeen  time.Time
+	
+	// TLS State
+	TLSBufIn  bytes.Buffer
+	TLSBufOut bytes.Buffer
+	TLSConn   net.Conn
+	HandshakeDone bool
 }
 
 var (
@@ -455,8 +460,21 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 			session.Type = ETypeTTLS
 			
 		case ETypeTTLS:
-			// TODO: Handle TLS Handshake fragments
-			logger.Print("[%s] EAP-TTLS Handshake starting...", clientAddr)
+			if len(eapData) < 6 {
+				return
+			}
+			flags := eapData[5]
+			pos := 6
+			if flags&TTLSFlagLength != 0 {
+				pos += 4 // Skip length field
+			}
+			if pos > len(eapData) {
+				return
+			}
+			tlsData := eapData[pos:]
+			
+			// Process TLS data
+			eapResp = handleTLSHandshake(session, tlsData, eapID, logger)
 		}
 
 	case EAPRequest:
@@ -468,7 +486,16 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 		var attributes []byte
 		
 		// Add EAP-Message attribute (First)
-		attributes = append(attributes, buildAttribute(EAPMessageType, eapResp)...)
+		// RFC 2869: Split EAP-Message if > 253 octets
+		data := eapResp
+		for len(data) > 0 {
+			chunkSize := 253
+			if len(data) < chunkSize {
+				chunkSize = len(data)
+			}
+			attributes = append(attributes, buildAttribute(EAPMessageType, data[:chunkSize])...)
+			data = data[chunkSize:]
+		}
 		
 		// Add State attribute
 		stateVal := []byte(fmt.Sprintf("%02x%08x", eapID, time.Now().UnixNano()))
