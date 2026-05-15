@@ -589,3 +589,117 @@ const (
 	TTLSFlagStart = 0x20
 	AccessChallenge = 11
 )
+// Global constants used in EAP handler
+const (
+	ETypeTTLS = 21
+)
+
+// EAP-TTLS Flags
+const (
+	TTLSFlagLength = 0x80
+	TTLSFlagMore   = 0x40
+	TTLSFlagStart  = 0x20
+)
+
+// MemConn implements net.Conn for in-memory TLS processing
+type MemConn struct {
+	in  *bytes.Buffer
+	out *bytes.Buffer
+	mu  sync.Mutex
+}
+
+func (m *MemConn) Read(b []byte) (n int, err error) {
+	for m.in.Len() == 0 {
+		time.Sleep(5 * time.Millisecond)
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.in.Read(b)
+}
+
+func (m *MemConn) Write(b []byte) (n int, err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.out.Write(b)
+}
+
+func (m *MemConn) Close() error                       { return nil }
+func (m *MemConn) LocalAddr() net.Addr                { return &net.UDPAddr{} }
+func (m *MemConn) RemoteAddr() net.Addr               { return &net.UDPAddr{} }
+func (m *MemConn) SetDeadline(t time.Time) error      { return nil }
+func (m *MemConn) SetReadDeadline(t time.Time) error  { return nil }
+func (m *MemConn) SetWriteDeadline(t time.Time) error { return nil }
+
+func handleTLSHandshake(session *EAPSession, data []byte, eapID byte, logger *Logger) []byte {
+	// 1. Pump new data into the TLS input buffer
+	if len(data) > 0 {
+		session.TLSBufIn.Write(data)
+	}
+
+	// 2. If this is the first data packet, start the TLS server in a goroutine
+	if session.TLSConn == nil {
+		mConn := &MemConn{in: &session.TLSBufIn, out: &session.TLSBufOut}
+		session.TLSConn = mConn
+		session.State = 2 // Initialize to TLS Handshake state
+		
+		go func() {
+			tlsServer := tls.Server(mConn, &tls.Config{
+				Certificates: []tls.Certificate{serverCert},
+				MinVersion:   tls.VersionTLS12,
+			})
+			if err := tlsServer.Handshake(); err != nil {
+				// Errors here are often just the connection closing after handshake
+			}
+			session.HandshakeDone = true
+		}()
+	}
+
+	// 3. Wait a moment for the TLS engine to produce output
+	for i := 0; i < 50; i++ {
+		if session.TLSBufOut.Len() > 0 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	// 4. Handle Fragmentation (RFC 5281)
+	output := session.TLSBufOut.Bytes()
+	totalLen := uint32(len(output))
+	chunkSize := 1000 // Conservative chunk size
+	
+	if len(output) > chunkSize {
+		// More fragments to follow
+		flags := TTLSFlagMore
+		
+		// RFC 5281: L bit only on the first fragment
+		if session.State == 2 {
+			flags |= TTLSFlagLength
+			session.State = 21 // Transition to "Sending Fragments" state
+		}
+		
+		chunk := output[:chunkSize]
+		session.TLSBufOut.Next(chunkSize)
+		
+		var respData []byte
+		if flags&TTLSFlagLength != 0 {
+			respData = make([]byte, 1+4+len(chunk))
+			respData[0] = byte(flags)
+			binary.BigEndian.PutUint32(respData[1:5], totalLen)
+			copy(respData[5:], chunk)
+		} else {
+			respData = append([]byte{byte(flags)}, chunk...)
+		}
+		
+		return buildEAPPacket(EAPRequest, eapID+1, ETypeTTLS, respData)
+	}
+
+	// 5. Final chunk or small response
+	if session.State == 2 || session.State == 21 {
+		session.State = 3 // Handshake phase finishing
+	}
+	
+	session.TLSBufOut.Reset()
+	flags := byte(0)
+	respData := append([]byte{flags}, output...)
+	return buildEAPPacket(EAPRequest, eapID+1, ETypeTTLS, respData)
+}
