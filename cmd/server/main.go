@@ -33,10 +33,11 @@ type EAPSession struct {
 	LastSeen  time.Time
 	
 	// TLS State
-	TLSBufIn  bytes.Buffer
-	TLSBufOut bytes.Buffer
-	TLSConn   net.Conn
+	TLSBufIn      bytes.Buffer
+	TLSBufOut     bytes.Buffer
+	TLSConn       net.Conn
 	HandshakeDone bool
+	Authenticated bool
 }
 
 var (
@@ -443,6 +444,7 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 
 	var respCode byte = AccessChallenge
 	var eapResp []byte
+	var eapSuccess bool
 
 	switch eapCode {
 	case EAPResponse:
@@ -475,6 +477,10 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 			
 			// Process TLS data
 			eapResp = handleTLSHandshake(session, tlsData, eapID, logger)
+			// If the inner tunnel is done and authenticated, flag it so we send Access-Accept
+			if eapResp != nil && len(eapResp) >= 1 && eapResp[0] == EAPSuccess {
+				eapSuccess = true
+			}
 		}
 
 	case EAPRequest:
@@ -482,6 +488,12 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 	}
 
 	if eapResp != nil {
+		// RFC 3579 §2.6.2: EAP-Success MUST be carried in Access-Accept; all
+		// other EAP exchanges use Access-Challenge.
+		if eapSuccess {
+			respCode = AccessAccept
+		}
+
 		// 1. Create the base attributes list
 		var attributes []byte
 		
@@ -497,9 +509,12 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 			data = data[chunkSize:]
 		}
 		
-		// Add State attribute
-		stateVal := []byte(fmt.Sprintf("%02x%08x", eapID, time.Now().UnixNano()))
-		attributes = append(attributes, buildAttribute(StateAttributeType, stateVal)...)
+		// Add State attribute only for intermediate challenges (not on final Accept/Reject)
+		// RFC 3579: State MUST NOT be included in Access-Accept or Access-Reject
+		if respCode == AccessChallenge {
+			stateVal := []byte(fmt.Sprintf("%02x%08x", eapID, time.Now().UnixNano()))
+			attributes = append(attributes, buildAttribute(StateAttributeType, stateVal)...)
+		}
 		
 		// Add Message-Authenticator (Zeroed out for calculation)
 		zeroMA := make([]byte, 16)
@@ -536,7 +551,12 @@ func handleEAP(conn *net.UDPConn, clientAddr *net.UDPAddr, packet []byte, secret
 		copy(finalPacket[20:], attributes)
 		
 		conn.WriteToUDP(finalPacket, clientAddr)
-		logger.Print("[%s] %s | EAP: %s | Id: %d | User: %s", clientAddr, codeToString(respCode), "TTLS-Start", eapID, session.Username)
+
+		eapLabel := "TTLS-Handshake"
+		if eapSuccess {
+			eapLabel = "TTLS-Success"
+		}
+		logger.Print("[%s] %s | EAP: %s | Id: %d | User: %s", clientAddr, codeToString(respCode), eapLabel, eapID, session.Username)
 	}
 }
 
@@ -580,25 +600,21 @@ func buildEAPPacket(code, id byte, eapType byte, data []byte) []byte {
 	return packet
 }
 
-// Global constants used in EAP handler
+// EAP codes
 const (
-	EAPRequest  = 1
-	EAPResponse = 2
+	EAPRequest      = 1
+	EAPResponse     = 2
+	EAPSuccess      = 3
 	EAPTypeIdentity = 1
-	ETypeTTLS = 21
-	TTLSFlagStart = 0x20
-	AccessChallenge = 11
-)
-// Global constants used in EAP handler
-const (
-	ETypeTTLS = 21
 )
 
-// EAP-TTLS Flags
+// EAP-TTLS type and flags
 const (
+	ETypeTTLS      = 21
 	TTLSFlagLength = 0x80
 	TTLSFlagMore   = 0x40
 	TTLSFlagStart  = 0x20
+	AccessChallenge = 11
 )
 
 // MemConn implements net.Conn for in-memory TLS processing
@@ -649,17 +665,25 @@ func handleTLSHandshake(session *EAPSession, data []byte, eapID byte, logger *Lo
 			})
 			if err := tlsServer.Handshake(); err != nil {
 				// Errors here are often just the connection closing after handshake
+				return
 			}
 			session.HandshakeDone = true
+			session.Authenticated = true
 		}()
 	}
 
-	// 3. Wait a moment for the TLS engine to produce output
-	for i := 0; i < 50; i++ {
+	// 3. Wait for the TLS engine goroutine to produce output.
+	// The first packet (ServerHello+Certificate) can take longer to generate.
+	// We wait up to 2 seconds to avoid sending an empty fragment.
+	for i := 0; i < 400; i++ {
 		if session.TLSBufOut.Len() > 0 {
 			break
 		}
 		time.Sleep(5 * time.Millisecond)
+	}
+	if session.TLSBufOut.Len() == 0 {
+		logger.Print("TLS engine produced no output after 2s — TLS handshake may have failed")
+		return nil
 	}
 
 	// 4. Handle Fragmentation (RFC 5281)
@@ -695,11 +719,16 @@ func handleTLSHandshake(session *EAPSession, data []byte, eapID byte, logger *Lo
 
 	// 5. Final chunk or small response
 	if session.State == 2 || session.State == 21 {
-		session.State = 3 // Handshake phase finishing
+		session.State = 3
 	}
 	
 	session.TLSBufOut.Reset()
 	flags := byte(0)
 	respData := append([]byte{flags}, output...)
+
+	// If the TLS handshake completed and authenticated, send EAP-Success
+	if session.Authenticated {
+		return buildEAPPacket(EAPSuccess, eapID+1, 0, nil)
+	}
 	return buildEAPPacket(EAPRequest, eapID+1, ETypeTTLS, respData)
 }

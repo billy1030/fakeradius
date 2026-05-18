@@ -5,6 +5,8 @@ bin/
 *.dll
 *.so
 *.dylib
+# Allow pre-built distributable binaries in dist/
+!dist/**/*.exe
 
 # Logs
 *.log
@@ -17,9 +19,10 @@ dist/server.log
 .planning/
 scratch/
 
-# Markdown (ignoring debug files except README)
+# Markdown (ignoring debug files except README/DEBUG)
 *.md
 !README.md
+!debug*.md
 
 # OS-specific
 .DS_Store
