@@ -123,7 +123,8 @@ func (s *Server) handleConnection(conn net.Conn) {
 		case TypeAuthen:
 			start, err := DecodeAuthenStart(decryptedBody)
 			if err != nil {
-				s.log("[%s] TACACS+ AuthenStart decode error: %v", remoteAddr, err)
+				s.log("[%s] TACACS+ AuthenStart decode error: %v (Secret len=%d, Header SessionID=%d, Hex: %x)",
+					remoteAddr, err, len(s.Secret), hdr.SessionID, decryptedBody)
 				return
 			}
 
