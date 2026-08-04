@@ -137,7 +137,7 @@ func main() {
 	defer logger.Close()
 
 	logger.Print("═══════════════════════════════════════════════════════")
-	logger.Print("  Fake RADIUS & TACACS+ Server v0.2a")
+	logger.Print("  Fake RADIUS & TACACS+ Server v0.3")
 	logger.Print("═══════════════════════════════════════════════════════")
 	logger.Print("")
 	logger.Print("  RADIUS Listening: %s (UDP)", *addr)
