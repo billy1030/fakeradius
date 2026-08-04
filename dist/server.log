@@ -274,3 +274,28 @@
 [2026-05-14 16:06:07.547] [127.0.0.1:59425] MA Algorithm detected: md5
 [2026-05-14 16:06:07.548] [127.0.0.1:59425] Access-Reject | Auth: CHAP | User: alice | Id: 0 | Len: 98 bytes | Reject: CHAP authentication failed
 [2026-05-14 16:06:59.568] Shutting down...
+[2026-08-04 11:20:09.458] ═══════════════════════════════════════════════════════
+[2026-08-04 11:20:09.463]   Fake RADIUS & TACACS+ Server v0.2a
+[2026-08-04 11:20:09.463] ═══════════════════════════════════════════════════════
+[2026-08-04 11:20:09.463] 
+[2026-08-04 11:20:09.464]   RADIUS Listening: :1812 (UDP)
+[2026-08-04 11:20:09.464]   TACACS+ Listening::4949 (TCP)
+[2026-08-04 11:20:09.464]   Shared secret:    testing123
+[2026-08-04 11:20:09.464]   Log file:         server.log
+[2026-08-04 11:20:09.464] 
+[2026-08-04 11:20:09.465]   Certificate:      cert/server.pem [MISSING/INVALID]
+[2026-08-04 11:20:09.465]   EAP-TTLS:         DISABLED
+[2026-08-04 11:20:09.465]   Private Key:      cert/server.key
+[2026-08-04 11:20:09.465]   Auth Protocols:   RADIUS (PAP, CHAP, MS-CHAP v1/v2, EAP-TTLS), TACACS+
+[2026-08-04 11:20:09.465]   Auth Logic:       Allow all except 'no_' prefix
+[2026-08-04 11:20:09.465]   Reject Usernames: no_admin, no_user, no_* (any)
+[2026-08-04 11:20:09.465] 
+[2026-08-04 11:20:09.465]   Disclaimer: This is a testing tool. Use at your own risk.
+[2026-08-04 11:20:09.465] 
+[2026-08-04 11:20:09.465]   Note: Use -a <IP:Port> to bind RADIUS or -t <IP:Port> to bind TACACS+.
+[2026-08-04 11:20:09.465]         If port 49 requires root privileges on Linux/macOS, use -t :4949
+[2026-08-04 11:20:09.465] 
+[2026-08-04 11:20:09.465]   Ready to accept connections...
+[2026-08-04 11:20:09.466] ═══════════════════════════════════════════════════════
+[2026-08-04 11:20:09.468]   Listening on [::]:1812
+[2026-08-04 11:20:09.468] TACACS+ Server listening on [::]:4949 (TCP)

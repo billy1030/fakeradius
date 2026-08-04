@@ -18,7 +18,18 @@ case "$ARCH" in
   *)       echo "Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
-BIN_DIR="$(dirname "$0")/multi/${OS}-${ARCH}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+if [ -f "${SCRIPT_DIR}/multi/${OS}-${ARCH}/fakeradius-server" ]; then
+  BIN="${SCRIPT_DIR}/multi/${OS}-${ARCH}/fakeradius-server"
+elif [ -f "${SCRIPT_DIR}/fakeradius-server" ]; then
+  BIN="${SCRIPT_DIR}/fakeradius-server"
+elif [ -f "${SCRIPT_DIR}/../dist/multi/${OS}-${ARCH}/fakeradius-server" ]; then
+  BIN="${SCRIPT_DIR}/../dist/multi/${OS}-${ARCH}/fakeradius-server"
+else
+  echo "Error: fakeradius-server binary not found for ${OS}-${ARCH}"
+  exit 1
+fi
 
 # If no arguments provided, use defaults
 if [ $# -eq 0 ]; then
@@ -27,6 +38,7 @@ fi
 
 echo "Starting Fake RADIUS & TACACS+ Server..."
 echo "Platform: ${OS}-${ARCH}"
+echo "Binary:   ${BIN}"
 echo ""
 
-exec "${BIN_DIR}/fakeradius-server" "$@"
+exec "${BIN}" "$@"
