@@ -83,13 +83,16 @@ Test scripts for each authentication mode:
 
 Usage:
 ```bash
-# Start server
-./start-server.sh testing123
+# Start RADIUS + TACACS+ server (defaults: RADIUS :1812, TACACS+ :4949)
+./start-server.sh
+
+# Or with explicit flags
+./start-server.sh --secret testing123 -a :1812 -t :4949
 
 # In another terminal, run tests
 ./test-pap-user.sh alice
-./test-chap-user.sh alice
-./test-mschap-user.sh alice
+./test-tacacs-user.sh alice
+./test-tacacs-no-user.sh no_admin
 ```
 
 ## Quick Start
@@ -97,17 +100,30 @@ Usage:
 ### Start the Server
 
 ```bash
-# Linux/macOS
-./dist/multi/linux-amd64/fakeradius-server --secret testing123 --log server.log
+# Linux/macOS — using the convenience script (auto-detects platform)
+./dist/start-server.sh
 
-# Windows
+# Linux/macOS — with explicit flags
+./dist/start-server.sh --secret testing123 -a :1812 -t :4949
+
+# Linux — bind to real IP (recommended for network devices)
+sudo ./dist/start-server.sh --secret testing123 -a 192.168.1.100:1812 -t 192.168.1.100:49
+
+# Windows — using the convenience script
+dist\start-server.bat
+
+# Windows — direct binary
 dist\multi\windows-amd64\fakeradius-server.exe --secret testing123 --log server.log
 ```
 
-Listen on specific IP and port:
-```bash
-fakeradius-server --secret testing123 --addr 192.168.1.100:1812 --log server.log
-```
+> [!IMPORTANT]
+> **Linux Port 49**: TCP port 49 requires `sudo`. Use `--tacacs-addr :4949` for non-root testing. Open ports in `firewalld`:
+> ```bash
+> sudo firewall-cmd --permanent --add-port=1812/udp
+> sudo firewall-cmd --permanent --add-port=49/tcp
+> sudo firewall-cmd --permanent --add-port=4949/tcp
+> sudo firewall-cmd --reload
+> ```
 
 ### Test with CLI
 
