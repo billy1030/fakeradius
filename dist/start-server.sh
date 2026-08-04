@@ -23,12 +23,13 @@ esac
 
 BIN_DIR="$(dirname "$0")/multi/${OS}-${ARCH}"
 
-echo "Starting Fake RADIUS Server..."
+echo "Starting Fake RADIUS & TACACS+ Server..."
 echo "Secret: $SECRET"
 echo "Log file: $LOGFILE"
 echo "Platform: ${OS}-${ARCH}"
-echo "Listening on: UDP :1812"
-echo "Auth Modes: PAP, CHAP, MS-CHAP v1/v2"
+echo "RADIUS Listening:  UDP :1812"
+echo "TACACS+ Listening: TCP :49 (use --tacacs-addr :4949 if non-root)"
+echo "Auth Modes: PAP, CHAP, MS-CHAP v1/v2, EAP-TTLS, TACACS+"
 echo ""
 
-"${BIN_DIR}/fakeradius-server" --secret "$SECRET" --log "$LOGFILE"
+"${BIN_DIR}/fakeradius-server" --secret "$SECRET" --log "$LOGFILE" --tacacs-addr :4949
