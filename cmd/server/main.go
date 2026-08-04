@@ -20,6 +20,8 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
+
+	"github.com/fakeradius/fakeradius/pkg/tacacs"
 )
 
 var verbose bool
@@ -93,8 +95,9 @@ type ResponseWriter interface {
 func main() {
 	pflag.CommandLine = pflag.NewFlagSet("fakeradius-server", pflag.ExitOnError)
 
-	secret := pflag.StringP("secret", "s", "", "Shared secret for RADIUS authentication (required)")
-	addr := pflag.StringP("addr", "a", ":1812", "Address to listen on")
+	secret := pflag.StringP("secret", "s", "", "Shared secret for RADIUS and TACACS+ authentication (required)")
+	addr := pflag.StringP("addr", "a", ":1812", "Address to listen on for RADIUS (UDP)")
+	tacacsAddr := pflag.StringP("tacacs-addr", "t", ":49", "Address to listen on for TACACS+ (TCP)")
 	logFile := pflag.StringP("log", "l", "", "Log file path (default: console only)")
 	pflag.BoolVarP(&verbose, "verbose", "v", false, "Enable detailed protocol debugging")
 	certFile := pflag.StringP("cert", "c", "cert/server.pem", "Path to server certificate")
@@ -134,34 +137,43 @@ func main() {
 	defer logger.Close()
 
 	logger.Print("═══════════════════════════════════════════════════════")
-	logger.Print("  Fake RADIUS Server v0.1a")
+	logger.Print("  Fake RADIUS & TACACS+ Server v0.2a")
 	logger.Print("═══════════════════════════════════════════════════════")
 	logger.Print("")
-	logger.Print("  Listening:      %s", *addr)
-	logger.Print("  Shared secret:  %s", *secret)
+	logger.Print("  RADIUS Listening: %s (UDP)", *addr)
+	logger.Print("  TACACS+ Listening:%s (TCP)", *tacacsAddr)
+	logger.Print("  Shared secret:    %s", *secret)
 	if *logFile != "" {
-		logger.Print("  Log file:       %s", *logFile)
+		logger.Print("  Log file:         %s", *logFile)
 	}
 	logger.Print("")
 	if serverCert.Certificate != nil {
-		logger.Print("  Certificate:    %s [LOADED]", *certFile)
+		logger.Print("  Certificate:      %s [LOADED]", *certFile)
 	} else {
-		logger.Print("  Certificate:    %s [MISSING/INVALID]", *certFile)
-		logger.Print("  EAP-TTLS:       DISABLED")
+		logger.Print("  Certificate:      %s [MISSING/INVALID]", *certFile)
+		logger.Print("  EAP-TTLS:         DISABLED")
 	}
-	logger.Print("  Private Key:    %s", *keyFile)
-	logger.Print("  Auth Modes:     PAP, CHAP, MS-CHAP v1/v2, EAP-TTLS")
-	logger.Print("  Auth Logic:     Allow all except 'no_' prefix")
+	logger.Print("  Private Key:      %s", *keyFile)
+	logger.Print("  Auth Protocols:   RADIUS (PAP, CHAP, MS-CHAP v1/v2, EAP-TTLS), TACACS+")
+	logger.Print("  Auth Logic:       Allow all except 'no_' prefix")
 	logger.Print("  Reject Usernames: no_admin, no_user, no_* (any)")
 	logger.Print("")
 	logger.Print("  Disclaimer: This is a testing tool. Use at your own risk.")
 	logger.Print("")
-	logger.Print("  Note: Use -a <IP:Port> to bind to a specific server address (recommended).")
-	logger.Print("        If you encounter timeouts (Disable UDP Checksum Offloading):")
-	logger.Print("        sudo ethtool -K <interface> tx off")
+	logger.Print("  Note: Use -a <IP:Port> to bind RADIUS or -t <IP:Port> to bind TACACS+.")
+	logger.Print("        If port 49 requires root privileges on Linux/macOS, use -t :4949")
 	logger.Print("")
 	logger.Print("  Ready to accept connections...")
 	logger.Print("═══════════════════════════════════════════════════════")
+
+	// Start TACACS+ server in a parallel goroutine
+	tacacsServer := tacacs.NewServer(*tacacsAddr, *secret, logger)
+	go func() {
+		if err := tacacsServer.ListenAndServe(); err != nil {
+			logger.Print("TACACS+ Server error: %v", err)
+		}
+	}()
+	defer tacacsServer.Close()
 
 	conn, err := net.ListenPacket("udp", *addr)
 	if err != nil {

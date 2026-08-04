@@ -27,6 +27,7 @@ func main() {
 	chap := pflag.Bool("chap", false, "Use CHAP authentication instead of PAP")
 	mschap := pflag.Bool("mschap", false, "Use MS-CHAP authentication instead of PAP")
 	ttls := pflag.Bool("ttls", false, "Use EAP-TTLS authentication")
+	tacacsFlag := pflag.Bool("tacacs", false, "Use TACACS+ authentication (TCP)")
 	caPath := pflag.String("ca", "", "Path to CA root certificate for server validation")
 
 	// Check for -h/--help before pflag.Parse
@@ -51,6 +52,16 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		printUsage()
 		os.Exit(1)
+	}
+
+	if *tacacsFlag {
+		fmt.Printf("Sending TACACS+ Authen-Request to %s...\n", config.Server)
+		fmt.Printf("Username: %s\n", config.Username)
+		if err := SendTACACSAuthenRequest(config.Server, config.Secret, config.Username, config.Password); err != nil {
+			fmt.Fprintf(os.Stderr, "TACACS+ Error: %v\n", err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	client := NewRadiusClient(config.Server, config.Secret, config.CAPath)
@@ -110,6 +121,7 @@ func printUsage() {
 	fmt.Println("  --chap      Use CHAP authentication (required with enterprise WiFi)")
 	fmt.Println("  --mschap    Use MS-CHAP authentication (required with Windows AD)")
 	fmt.Println("  --ttls      Use EAP-TTLS authentication (secure tunneled)")
+	fmt.Println("  --tacacs    Use TACACS+ authentication (TCP)")
 	fmt.Println("  --ca        Path to CA root certificate for server validation")
 	fmt.Println("")
 	fmt.Println("Examples:")
@@ -118,4 +130,5 @@ func printUsage() {
 	fmt.Println("  radius-cli --secret testing123 --username alice --password test --chap")
 	fmt.Println("  radius-cli --secret testing123 --username alice --password test --mschap")
 	fmt.Println("  radius-cli --secret testing123 --username alice --password test --ttls --ca ca.pem")
+	fmt.Println("  radius-cli --server 127.0.0.1:4949 --secret testing123 --username alice --password test --tacacs")
 }

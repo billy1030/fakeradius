@@ -1,19 +1,20 @@
-# FakeRADIUS
+# FakeRADIUS & FakeTACACS+
 
-A lightweight, self-contained RADIUS server for testing authentication clients. Supports **PAP**, **CHAP**, **MS-CHAP**, and **EAP-TTLS** authentication modes.
+A lightweight, self-contained mock AAA server for testing RADIUS and TACACS+ authentication clients. Supports **PAP**, **CHAP**, **MS-CHAP**, **EAP-TTLS**, and **TACACS+** (RFC 8907) authentication modes.
 
 ## Overview
 
-FakeRADIUS accepts all authentication requests except usernames prefixed with `no_`. Designed for testing RADIUS client devices such as switches, WiFi controllers, and enterprise authentication systems.
+FakeRADIUS accepts all authentication requests except usernames prefixed with `no_`. Designed for testing AAA client devices such as switches, routers, firewalls (Palo Alto, Fortinet, Cisco), WiFi controllers, and enterprise network management systems.
 
-## Supported Authentication Modes
+## Supported Authentication & Protocol Modes
 
-| Mode | Support | Security | Use Case |
-|------|---------|----------|----------|
-| PAP | Automatic | Basic | Legacy compatibility |
-| CHAP | Automatic | High | Enterprise WiFi (RFC 1994) |
-| MS-CHAP v2 | Automatic | High | Windows AD, enterprise (RFC 2759) |
-| EAP-TTLS | Automatic | Very High | Secure Tunneled Auth |
+| Mode / Protocol | Transport | Support | Security | Use Case |
+|-----------------|-----------|---------|----------|----------|
+| PAP | UDP (1812) | Automatic | Basic | Legacy compatibility |
+| CHAP | UDP (1812) | Automatic | High | Enterprise WiFi (RFC 1994) |
+| MS-CHAP v2 | UDP (1812) | Automatic | High | Windows AD, enterprise (RFC 2759) |
+| EAP-TTLS | UDP (1812) | Automatic | Very High | Secure Tunneled Auth |
+| TACACS+ | TCP (49) | Automatic | High | Cisco/Network Device Management (RFC 8907) |
 
 ## RADIUS Message Authentication
 
@@ -130,6 +131,11 @@ radius-cli --username alice --password StrongPass123! --secret testing123 --msch
 radius-cli --username alice --password test --secret testing123 --ttls --ca ca.pem
 ```
 
+**TACACS+ Authentication:**
+```bash
+radius-cli --server 127.0.0.1:4949 --secret testing123 --username alice --password test --tacacs
+```
+
 **Test rejected user (no_ prefix):**
 ```bash
 radius-cli --username no_admin --password test --secret testing123
@@ -144,15 +150,16 @@ radius-cli --username alice --password test --secret testing123 --server 192.168
 
 | Username | Response |
 |----------|----------|
-| `alice`, `bob`, `admin`, any name | Access-Accept |
-| `no_*` prefix (e.g., `no_admin`, `no_peter`) | Access-Reject |
+| `alice`, `bob`, `admin`, any name | Access-Accept / PASS |
+| `no_*` prefix (e.g., `no_admin`, `no_peter`) | Access-Reject / FAIL |
 
 ## Server Options
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--secret` | Shared secret (required) | - |
-| `--addr` | Listen address (IP:Port) | `:1812` |
+| `--secret` | Shared secret for RADIUS and TACACS+ (required) | - |
+| `--addr` | RADIUS listen address (IP:Port, UDP) | `:1812` |
+| `--tacacs-addr` | TACACS+ listen address (IP:Port, TCP) | `:49` |
 | `--log` | Log file path | console only |
 | `--cert` | Path to server certificate | `cert/server.pem` |
 | `--key` | Path to server private key | `cert/server.key` |
@@ -164,16 +171,18 @@ radius-cli --username alice --password test --secret testing123 --server 192.168
 | `--username` | Username for authentication (required) | - |
 | `--password` | Password for authentication (required) | - |
 | `--secret` | Shared secret with the server (required) | - |
-| `--server` | RADIUS server IP:Port | `127.0.0.1:1812` |
+| `--server` | AAA server IP:Port | `127.0.0.1:1812` |
 | `--chap` | Use CHAP authentication | false |
 | `--mschap` | Use MS-CHAP authentication | false |
 | `--pap` | Use PAP authentication | true (default) |
 | `--ttls` | Use EAP-TTLS authentication | false |
+| `--tacacs` | Use TACACS+ authentication (TCP) | false |
 | `--ca` | Path to CA root certificate | - |
 
 ## Features
 
 - RADIUS authentication on UDP port 1812
+- **TACACS+** authentication and authorization on TCP port 49 (RFC 8907)
 - **PAP** (Password Authentication Protocol)
 - **CHAP** (Challenge-Handshake) with MD5 validation
 - **MS-CHAP v1/v2** (Microsoft CHAP) for Windows AD integration
