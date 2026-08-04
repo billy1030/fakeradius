@@ -169,7 +169,8 @@ func (s *Server) handleConnection(conn net.Conn) {
 			if resp.Status == AuthorStatusFail {
 				statusStr = "FAIL"
 			}
-			logMsg = fmt.Sprintf("Author | User: %s | Status: %s | SessionID: %d", req.User, statusStr, hdr.SessionID)
+			logMsg = fmt.Sprintf("Author | User: %s | Status: %s | SessionID: %d | Args: [%s]",
+				req.User, statusStr, hdr.SessionID, FormatAuthorArgs(req.Args))
 
 		default:
 			s.log("[%s] TACACS+ unsupported packet type: %d", remoteAddr, hdr.Type)
