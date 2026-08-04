@@ -1,123 +1,64 @@
-# FakeRADIUS & FakeTACACS+
+﻿# FakeRADIUS & FakeTACACS+
 
-A lightweight, self-contained mock AAA server for testing RADIUS and TACACS+ authentication clients. Supports **PAP**, **CHAP**, **MS-CHAP**, **EAP-TTLS**, and **TACACS+** (RFC 8907) authentication modes.
+> **v0.3** â€” Dual RADIUS + TACACS+ mock AAA server. Verified working with **Palo Alto Networks** firewalls (CHAP auth + authorization AV-pairs).
 
-## Overview
+A lightweight, self-contained mock AAA server for testing RADIUS and TACACS+ authentication clients. Accepts all users except those prefixed with `no_`. No external dependencies â€” single binary, cross-platform.
 
-FakeRADIUS accepts all authentication requests except usernames prefixed with `no_`. Designed for testing AAA client devices such as switches, routers, firewalls (Palo Alto, Fortinet, Cisco), WiFi controllers, and enterprise network management systems.
+## Supported Protocols & Auth Modes
 
-## Supported Authentication & Protocol Modes
+| Protocol | Transport | Auth Types | Standard |
+|----------|-----------|------------|----------|
+| **RADIUS** | UDP :1812 | PAP, CHAP, MS-CHAP v1/v2, EAP-TTLS | RFC 2865 / 2869 |
+| **TACACS+** | TCP :49 / :4949 | ASCII, PAP, CHAP, MS-CHAP | RFC 8907 |
 
-| Mode / Protocol | Transport | Support | Security | Use Case |
-|-----------------|-----------|---------|----------|----------|
-| PAP | UDP (1812) | Automatic | Basic | Legacy compatibility |
-| CHAP | UDP (1812) | Automatic | High | Enterprise WiFi (RFC 1994) |
-| MS-CHAP v2 | UDP (1812) | Automatic | High | Windows AD, enterprise (RFC 2759) |
-| EAP-TTLS | UDP (1812) | Automatic | Very High | Secure Tunneled Auth |
-| TACACS+ | TCP (49) | Automatic | High | Cisco/Network Device Management (RFC 8907) |
+### TACACS+ Authentication Methods
 
-## RADIUS Message Authentication
+TACACS+ delegates PAP/CHAP negotiation to the NAS device (firewall/switch). The server receives the method type and decides PASS or FAIL:
 
-This server strictly adheres to RFC 2865 and RFC 2869 for secure packet validation. Key components include:
+| authen_type | Value | NAS sends | Server action |
+|-------------|-------|-----------|---------------|
+| ASCII | `0x01` | Username (may prompt for password) | âœ… PASS |
+| **PAP** | `0x02` | Username + cleartext password | âœ… PASS |
+| **CHAP** | `0x03` | Username + CHAP response (ID + MD5) | âœ… PASS |
+| **MS-CHAP** | `0x04` | Username + MS-CHAP response | âœ… PASS |
+
+> [!NOTE]
+> As a **fake/testing server**, hash/password verification is intentionally skipped. Any user (except `no_` prefix) is accepted regardless of credential content.
+
+### RADIUS Message Authentication
 
 | Component | Logic | Description |
 |-----------|-------|-------------|
-| **Shared Secret** | `string` | The common password shared between the client (Firewall) and this server. |
-| **Request Authenticator** | `random(16)` | A random 16-byte value sent by the client in the header of every request. |
-| **Response Authenticator** | `MD5(Code + ID + Len + ReqAuth + Attrs + Secret)` | Proves the response came from someone who knows the secret. |
-| **Message-Authenticator** | `HMAC-MD5(Packet, Secret)` | A digital signature (Attribute 80) that protects the entire packet from tampering. |
-| **Password (PAP)** | `Password XOR MD5(Secret + ReqAuth)` | Passwords are never sent in cleartext, even in PAP mode. |
-
-> [!NOTE]
-> To ensure maximum compatibility with strict firewalls (like Palo Alto), this server uses a **minimalist `Access-Accept`** strategy, omitting optional attributes to prevent signature verification timeouts.
-
-### Firewall Compatibility & Troubleshooting
-
-If you are using this server with strict firewalls (like Palo Alto Networks), you may encounter "Timeout" or "Invalid Authenticator" errors. Follow these steps:
-
-#### 1. Disable UDP Checksum Offloading
-In virtualized environments (VMware), the virtual NIC may fail to calculate UDP checksums, leading the firewall to drop packets.
-```bash
-# Run on the Linux server
-sudo ethtool -K ens33 tx off
-```
-
-#### 2. Bind to a Specific IP (Recommended)
-Firewalls often ignore RADIUS responses if the source IP does not match the IP they sent the request to. It is **highly recommended** to use the `-a` flag to bind to the specific interface IP:
-```bash
-./fakeradius-server -s testing123 -a 192.168.1.100:1812 -v
-```
-
-#### 3. Minimalist Responses
-This server uses a **minimalist `Access-Accept`** strategy by default (sending only the header with no attributes). This ensures maximum compatibility with firewalls that get confused by `Message-Authenticator` attributes in response packets.
-
-#### 4. Flag Syntax Typo (Single vs Double Dash)
-If you use a single dash for long flags (e.g., `-addr` instead of `--addr`), the program might misinterpret the flag. The server includes **Typo Protection** to catch this, but always use:
-*   **Correct**: `--addr :1812` or `-a :1812`
-*   **Incorrect**: `-addr :1812` (This will be read as `-a` with value `ddr`)
-
-## Binaries
-
-Pre-built binaries for all platforms are in `dist/multi/`:
-
-| Platform | Architecture | Location |
-|----------|--------------|----------|
-| Windows | amd64, arm64 | `dist/multi/windows-{amd64,arm64}/` |
-| Linux | amd64, arm64 | `dist/multi/linux-{amd64,arm64}/` |
-| macOS | amd64, arm64 | `dist/multi/darwin-{amd64,arm64}/` |
-
-### Quick Start Scripts
-
-Test scripts for each authentication mode:
-
-| Script | Auth Mode | Expected Result |
-|--------|-----------|-----------------|
-| `test-pap-user` | PAP | Access-Accept |
-| `test-pap-no-user` | PAP | Access-Reject |
-| `test-chap-user` | CHAP | Access-Accept |
-| `test-chap-no-user` | CHAP | Access-Reject |
-| `test-mschap-user` | MS-CHAP | Access-Accept |
-| `test-mschap-no-user` | MS-CHAP | Access-Reject |
-| `test-ttls-no-ca` | EAP-TTLS | UNTRUSTED status |
-| `test-ttls-with-ca` | EAP-TTLS | TRUSTED status |
-
-Usage:
-```bash
-# Start RADIUS + TACACS+ server (defaults: RADIUS :1812, TACACS+ :4949)
-./start-server.sh
-
-# Or with explicit flags
-./start-server.sh --secret testing123 -a :1812 -t :4949
-
-# In another terminal, run tests
-./test-pap-user.sh alice
-./test-tacacs-user.sh alice
-./test-tacacs-no-user.sh no_admin
-```
+| **Shared Secret** | `string` | Common password between client and server |
+| **Request Authenticator** | `random(16)` | Random 16-byte value per request |
+| **Response Authenticator** | `MD5(Code+ID+Len+ReqAuth+Attrs+Secret)` | Proves response origin |
+| **Message-Authenticator** | `HMAC-MD5(Packet, Secret)` | Packet integrity (Attribute 80) |
+| **PAP Password** | `Password XOR MD5(Secret + ReqAuth)` | Never sent in cleartext |
 
 ## Quick Start
 
-### Start the Server
+### 1. Start the Server
 
 ```bash
-# Linux/macOS — using the convenience script (auto-detects platform)
+# Linux/macOS â€” auto-detects platform binary
 ./dist/start-server.sh
 
-# Linux/macOS — with explicit flags
+# Linux â€” with explicit flags
 ./dist/start-server.sh --secret testing123 -a :1812 -t :4949
 
-# Linux — bind to real IP (recommended for network devices)
-sudo ./dist/start-server.sh --secret testing123 -a 192.168.1.100:1812 -t 192.168.1.100:49
+# Linux â€” bind to real IP (required for network devices)
+sudo ./dist/start-server.sh --secret testing123 -a 192.168.1.100:1812 -t 172.22.30.47:49
 
-# Windows — using the convenience script
+# Windows â€” convenience script
 dist\start-server.bat
 
-# Windows — direct binary
-dist\multi\windows-amd64\fakeradius-server.exe --secret testing123 --log server.log
+# Windows â€” direct binary
+dist\multi\windows-amd64\fakeradius-server.exe --secret testing123
 ```
 
 > [!IMPORTANT]
-> **Linux Port 49**: TCP port 49 requires `sudo`. Use `--tacacs-addr :4949` for non-root testing. Open ports in `firewalld`:
+> **Linux Port 49**: TCP port 49 requires `sudo`. Use `-t :4949` for non-root testing.
+> Open firewall ports permanently:
 > ```bash
 > sudo firewall-cmd --permanent --add-port=1812/udp
 > sudo firewall-cmd --permanent --add-port=49/tcp
@@ -125,84 +66,192 @@ dist\multi\windows-amd64\fakeradius-server.exe --secret testing123 --log server.
 > sudo firewall-cmd --reload
 > ```
 
-### Test with CLI
+### 2. Test with Built-in Scripts
 
-**PAP (default):**
+| Script | Auth Mode | Expected Result |
+|--------|-----------|-----------------|
+| `test-pap-user.sh` | RADIUS PAP | Access-Accept |
+| `test-pap-no-user.sh` | RADIUS PAP | Access-Reject |
+| `test-chap-user.sh` | RADIUS CHAP | Access-Accept |
+| `test-chap-no-user.sh` | RADIUS CHAP | Access-Reject |
+| `test-mschap-user.sh` | RADIUS MS-CHAP | Access-Accept |
+| `test-mschap-no-user.sh` | RADIUS MS-CHAP | Access-Reject |
+| `test-ttls-no-ca.sh` | EAP-TTLS | UNTRUSTED |
+| `test-ttls-with-ca.sh` | EAP-TTLS | TRUSTED |
+| `test-tacacs-user.sh` | TACACS+ | PASS |
+| `test-tacacs-no-user.sh` | TACACS+ | FAIL |
+
+```bash
+# Run from the dist/ directory
+./test-pap-user.sh alice
+./test-tacacs-user.sh peter
+./test-tacacs-no-user.sh no_admin
+```
+
+### 3. Test with CLI (`radius-cli`)
+
+**RADIUS PAP (default):**
 ```bash
 radius-cli --username alice --password test --secret testing123
 ```
 
-**CHAP:**
+**RADIUS CHAP:**
 ```bash
 radius-cli --username alice --password StrongPass123! --secret testing123 --chap
 ```
 
-**MS-CHAP:**
+**RADIUS MS-CHAP:**
 ```bash
 radius-cli --username alice --password StrongPass123! --secret testing123 --mschap
 ```
 
-**EAP-TTLS with Certificate Verification:**
+**EAP-TTLS:**
 ```bash
 radius-cli --username alice --password test --secret testing123 --ttls --ca ca.pem
 ```
 
-**TACACS+ Authentication:**
+**TACACS+ (ASCII/PAP):**
 ```bash
 radius-cli --server 127.0.0.1:4949 --secret testing123 --username alice --password test --tacacs
 ```
 
-**Test rejected user (no_ prefix):**
+**Test reject (no_ prefix):**
 ```bash
 radius-cli --username no_admin --password test --secret testing123
+radius-cli --server 127.0.0.1:4949 --secret testing123 --username no_admin --password test --tacacs
 ```
 
 **Test remote server:**
 ```bash
-radius-cli --username alice --password test --secret testing123 --server 192.168.1.100:1812
+radius-cli --username alice --password test --secret testing123 --server 172.22.30.47:1812
 ```
 
-## Behavior
+## Auth Behavior
 
-| Username | Response |
-|----------|----------|
-| `alice`, `bob`, `admin`, any name | Access-Accept / PASS |
-| `no_*` prefix (e.g., `no_admin`, `no_peter`) | Access-Reject / FAIL |
+| Username | RADIUS | TACACS+ |
+|----------|--------|---------|
+| `alice`, `bob`, `peter`, any name | Access-Accept | PASS + PASS_ADD |
+| `no_admin`, `no_user`, `no_*` | Access-Reject | FAIL |
 
 ## Server Options
 
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--secret` | `-s` | Shared secret for RADIUS and TACACS+ | *(required)* |
+| `--addr` | `-a` | RADIUS listen address (UDP) | `:1812` |
+| `--tacacs-addr` | `-t` | TACACS+ listen address (TCP) | `:49` |
+| `--log` | `-l` | Log file path | console only |
+| `--cert` | | TLS certificate path | `cert/server.pem` |
+| `--key` | | TLS private key path | `cert/server.key` |
+
+## CLI Options (`radius-cli`)
+
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--secret` | Shared secret for RADIUS and TACACS+ (required) | - |
-| `--addr` | RADIUS listen address (IP:Port, UDP) | `:1812` |
-| `--tacacs-addr` | TACACS+ listen address (IP:Port, TCP) | `:49` |
-| `--log` | Log file path | console only |
-| `--cert` | Path to server certificate | `cert/server.pem` |
-| `--key` | Path to server private key | `cert/server.key` |
-
-## CLI Options
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--username` | Username for authentication (required) | - |
-| `--password` | Password for authentication (required) | - |
-| `--secret` | Shared secret with the server (required) | - |
+| `--username` | Username for authentication | *(required)* |
+| `--password` | Password for authentication | *(required)* |
+| `--secret` | Shared secret with the server | *(required)* |
 | `--server` | AAA server IP:Port | `127.0.0.1:1812` |
-| `--chap` | Use CHAP authentication | false |
-| `--mschap` | Use MS-CHAP authentication | false |
-| `--pap` | Use PAP authentication | true (default) |
-| `--ttls` | Use EAP-TTLS authentication | false |
-| `--tacacs` | Use TACACS+ authentication (TCP) | false |
-| `--ca` | Path to CA root certificate | - |
+| `--pap` | Use RADIUS PAP | *(default)* |
+| `--chap` | Use RADIUS CHAP | false |
+| `--mschap` | Use RADIUS MS-CHAP | false |
+| `--ttls` | Use RADIUS EAP-TTLS | false |
+| `--tacacs` | Use TACACS+ (TCP) | false |
+| `--ca` | CA certificate for EAP-TTLS | - |
 
-## Features
+## Firewall Compatibility
 
-- RADIUS authentication on UDP port 1812
-- **TACACS+** authentication and authorization on TCP port 49 (RFC 8907)
-- **PAP** (Password Authentication Protocol)
-- **CHAP** (Challenge-Handshake) with MD5 validation
-- **MS-CHAP v1/v2** (Microsoft CHAP) for Windows AD integration
-- Message-Authenticator validation
-- Reply-Message in responses
-- Timestamped logging to file
-- Cross-platform CLI tool for testing (Windows, Linux, macOS)
+### Palo Alto Networks âœ… Verified (v0.3)
+
+Full TACACS+ auth + authz verified end-to-end:
+```
+Authentication to TACACS+ server at '172.22.30.47' for user 'peter'
+Attempting CHAP authentication ...
+Authorization request sent â†’ service=PaloAlto, protocol=firewall
+Authorization succeeded
+Authentication succeeded!
+```
+
+Configure in PA: **Device â†’ Server Profiles â†’ TACACS+**
+- **Server IP**: your server IP
+- **Port**: `4949` (or `49` with sudo)
+- **Secret**: `testing123`
+- **Protocol**: CHAP or PAP
+
+### Cisco IOS
+
+```
+aaa new-model
+tacacs server FAKE
+ address ipv4 172.22.30.47
+ port 4949
+ key testing123
+aaa authentication login default group tacacs+ local
+```
+
+### Firewall Rules (Linux `firewalld`)
+
+```bash
+sudo firewall-cmd --permanent --add-port=1812/udp   # RADIUS
+sudo firewall-cmd --permanent --add-port=49/tcp      # TACACS+ standard
+sudo firewall-cmd --permanent --add-port=4949/tcp    # TACACS+ non-root
+sudo firewall-cmd --reload
+```
+
+### UDP Checksum Offloading (VMware / virtualized)
+
+If you see timeout or invalid authenticator errors in a VM:
+```bash
+sudo ethtool -K ens33 tx off
+```
+
+## Pre-built Binaries
+
+| Platform | Architecture | Path |
+|----------|--------------|------|
+| Linux | amd64 | `dist/multi/linux-amd64/fakeradius-server` |
+| Linux | arm64 | `dist/multi/linux-arm64/fakeradius-server` |
+| Windows | amd64 | `dist/multi/windows-amd64/fakeradius-server.exe` |
+| Windows | arm64 | `dist/multi/windows-arm64/fakeradius-server.exe` |
+| macOS | amd64 | `dist/multi/darwin-amd64/fakeradius-server` |
+| macOS | arm64 | `dist/multi/darwin-arm64/fakeradius-server` |
+
+## Build from Source
+
+```bash
+git clone https://github.com/billy1030/fakeradius.git
+cd fakeradius
+
+# Build for current platform
+go build -o fakeradius-server ./cmd/server
+go build -o radius-cli ./cmd/cli
+
+# Cross-compile for Linux
+GOOS=linux GOARCH=amd64 go build -o fakeradius-server-linux ./cmd/server
+
+# Run tests
+go test ./pkg/...
+```
+
+## Changelog
+
+### v0.3 (2026-08-04)
+- ðŸ› **Fixed**: TACACS+ Authorization request decoder â€” corrected RFC 8907 Â§6.1 field offsets (`user_len@[4]`, `arg_cnt@[7]`)
+- âœ… **Verified**: Full auth + authz working with Palo Alto Networks firewall (CHAP + AV-pair mirroring)
+- ðŸ“ **Improved**: Authorization log now shows all AV-pairs (`service=`, `protocol=`, `cmd=`)
+
+### v0.2 (2026-08-04)
+- âœ¨ **Added**: TACACS+ protocol support (RFC 8907) on TCP port 49/4949
+- âœ¨ **Added**: TACACS+ Authentication (ASCII, PAP, CHAP, MS-CHAP)
+- âœ¨ **Added**: TACACS+ Authorization with AV-pair mirroring
+- âœ¨ **Added**: Convenience scripts: `start-server.sh`, `start-server.bat`, `test-tacacs-*.sh`
+- ðŸ› **Fixed**: Linux binary path resolution in shell scripts
+
+### v0.1
+- Initial RADIUS server with PAP, CHAP, MS-CHAP v1/v2, EAP-TTLS
+- Cross-platform CLI test client
+- Pre-built binaries for Windows, Linux, macOS
+
+## Disclaimer
+
+This is a **testing tool only**. It is intentionally permissive â€” use at your own risk in isolated test environments.
